@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>巾着袋 名入れシミュレーター</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Antique&family=Noto+Sans+JP:wght@400;700&family=Yomogi&family=Shippori+Mincho:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf7f2;
+    --panel: #ffffff;
+    --accent: #c0392b;
+    --text: #2c2016;
+    --subtext: #7a6a5a;
+    --border: #e0d8cc;
+    --shadow: rgba(44,32,22,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; }
+
+  header {
+    background: var(--text); color: #fff;
+    padding: 18px 20px 14px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  header::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 12px);
+  }
+  header h1 { font-family: 'Shippori Mincho', serif; font-size: 1.3rem; letter-spacing: 0.15em; position: relative; }
+  header p { font-size: 0.72rem; color: rgba(255,255,255,0.55); margin-top: 4px; letter-spacing: 0.1em; position: relative; }
+
+  .controls { background: var(--panel); border-bottom: 1px solid var(--border); padding: 16px 16px 12px; }
+  .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+  .control-item label { display: block; font-size: 0.68rem; color: var(--subtext); letter-spacing: 0.08em; margin-bottom: 5px; font-weight: 700; text-transform: uppercase; }
+  .control-item input[type="text"] {
+    width: 100%; border: 1.5px solid var(--border); border-radius: 6px;
+    padding: 8px 10px; font-size: 0.95rem; font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s;
+  }
+  .control-item input[type="text"]:focus { border-color: var(--accent); }
+  .control-item select {
+    width: 100%; border: 1.5px solid var(--border); border-radius: 6px;
+    padding: 7px 10px; font-size: 0.88rem; background: var(--bg); color: var(--text);
+    outline: none; appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a6a5a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+  .color-row { display: flex; gap: 8px; align-items: center; }
+  .color-row input[type="color"] { width: 36px; height: 36px; border: 2px solid var(--border); border-radius: 6px; padding: 2px; cursor: pointer; background: none; }
+  .fabric-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+  .swatch { width: 36px; height: 36px; border-radius: 6px; border: 2.5px solid transparent; cursor: pointer; overflow: hidden; transition: transform 0.15s, border-color 0.15s; flex-shrink: 0; }
+  .swatch:hover { transform: scale(1.1); }
+  .swatch.active { border-color: var(--accent); }
+  .swatch svg { width: 100%; height: 100%; }
+  .name-size-row { grid-column: span 2; display: flex; gap: 10px; align-items: center; }
+  .name-size-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+  .size-label { font-size: 0.78rem; color: var(--subtext); white-space: nowrap; }
+
+  .previews-title { font-family: 'Shippori Mincho', serif; font-size: 0.75rem; color: var(--subtext); letter-spacing: 0.12em; text-align: center; padding: 14px 0 4px; }
+  .select-hint { font-size: 0.68rem; color: var(--subtext); text-align: center; padding: 0 0 10px; letter-spacing: 0.06em; }
+
+  .previews { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 12px 16px; }
+  .preview-card {
+    background: var(--panel); border-radius: 12px; overflow: hidden;
+    box-shadow: 0 2px 12px var(--shadow); display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; border: 2.5px solid transparent;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+    position: relative;
+  }
+  .preview-card:active { transform: scale(0.97); }
+  .preview-card.selected { border-color: var(--accent); box-shadow: 0 4px 20px rgba(192,57,43,0.18); }
+  .check-badge {
+    display: none; position: absolute; top: 8px; right: 8px;
+    width: 22px; height: 22px; background: var(--accent); border-radius: 50%;
+    align-items: center; justify-content: center;
+  }
+  .preview-card.selected .check-badge { display: flex; }
+  .preview-label { font-size: 0.66rem; color: var(--subtext); letter-spacing: 0.1em; padding: 8px 0 4px; font-weight: 700; text-transform: uppercase; }
+
+  .order-trigger-area { padding: 4px 12px 16px; }
+  .order-trigger-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 10px;
+    background: var(--accent); color: #fff;
+    font-family: 'Shippori Mincho', serif; font-size: 1rem; letter-spacing: 0.12em;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.2s, transform 0.1s;
+    opacity: 0.35; pointer-events: none;
+  }
+  .order-trigger-btn.active { opacity: 1; pointer-events: auto; }
+  .order-trigger-btn:active { transform: scale(0.98); }
+
+  .order-panel {
+    display: none; margin: 0 12px 28px;
+    background: var(--text); color: #fff;
+    border-radius: 14px; padding: 20px 18px 18px;
+    animation: slideUp 0.25s ease;
+  }
+  .order-panel.visible { display: block; }
+  @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  .order-panel-title { font-family: 'Shippori Mincho', serif; font-size: 0.75rem; letter-spacing: 0.15em; color: rgba(255,255,255,0.5); margin-bottom: 12px; }
+
+  .order-summary { margin-bottom: 14px; }
+  .order-summary-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.8rem; }
+  .order-summary-row:last-child { border-bottom: none; }
+  .order-summary-row .ok { color: rgba(255,255,255,0.45); }
+  .order-summary-row .ov { color: #fff; font-weight: bold; }
+
+  .url-box {
+    background: rgba(255,255,255,0.08); border-radius: 8px;
+    padding: 10px 12px; margin-bottom: 14px;
+  }
+  .url-label { font-size: 0.65rem; color: rgba(255,255,255,0.4); margin-bottom: 5px; letter-spacing: 0.08em; }
+  .url-text { font-size: 0.68rem; color: #aaddf0; font-family: monospace; word-break: break-all; line-height: 1.5; }
+
+  .order-btns { display: flex; gap: 10px; }
+  .order-btn {
+    flex: 1; padding: 10px 0; border-radius: 8px; border: none;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 0.82rem; letter-spacing: 0.06em;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: opacity 0.18s;
+  }
+  .order-btn:hover { opacity: 0.82; }
+  .order-btn.copy { background: rgba(255,255,255,0.15); color: #fff; }
+  .order-btn.copy.copied { background: #27ae60; }
+  .order-btn.dl { background: var(--accent); color: #fff; }
+  .order-btn.dl.saving { opacity: 0.5; pointer-events: none; }
+
+  @media (min-width: 600px) {
+    .previews { grid-template-columns: repeat(4, 1fr); padding: 0 16px 16px; gap: 14px; }
+    .control-grid { grid-template-columns: repeat(4, 1fr); }
+    .name-size-row { grid-column: span 4; }
+    .order-trigger-area { padding: 4px 16px 16px; }
+    .order-panel { margin: 0 16px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>巾着袋 名入れシミュレーター</h1>
+  <p>DRAWSTRING BAG NAME PREVIEW</p>
+</header>
+
+<div class="controls">
+  <div class="control-grid">
+    <div class="control-item" style="grid-column: span 2;">
+      <label>お名前</label>
+      <input type="text" id="nameInput" value="Hanako" maxlength="20" placeholder="名前を入力">
+    </div>
+    <div class="control-item">
+      <label>フォント</label>
+      <select id="fontSelect">
+        <option value="'Shippori Mincho', serif">明朝体</option>
+        <option value="'Noto Sans JP', sans-serif">ゴシック体</option>
+        <option value="'Yomogi', cursive">手書き風</option>
+        <option value="'Zen Antique', serif">アンティーク</option>
+      </select>
+    </div>
+    <div class="control-item">
+      <label>文字の色</label>
+      <div class="color-row">
+        <input type="color" id="textColor" value="#2c2016">
+        <span id="textColorHex" style="font-size:0.75rem;color:var(--subtext)">#2c2016</span>
+      </div>
+    </div>
+    <div class="control-item" style="grid-column: span 2;">
+      <label>布地</label>
+      <div class="fabric-swatches" id="fabricSwatches"></div>
+    </div>
+    <div class="control-item" id="solidColorControl" style="display:none">
+      <label>布地の色</label>
+      <div class="color-row">
+        <input type="color" id="fabricColor" value="#7eb8c9">
+        <span id="fabricColorHex" style="font-size:0.75rem;color:var(--subtext)">#7eb8c9</span>
+      </div>
+    </div>
+    <div class="name-size-row">
+      <span class="size-label">文字サイズ</span>
+      <input type="range" id="fontSize" min="12" max="48" value="26">
+      <span class="size-label" id="fontSizeVal">26</span>
+    </div>
+  </div>
+</div>
+
+<div class="previews-title">▼ 4パターン プレビュー</div>
+<div class="select-hint">タップしてデザインを選んでください</div>
+<div class="previews" id="previews"></div>
+
+<div class="order-trigger-area">
+  <button class="order-trigger-btn" id="orderTriggerBtn">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 5H3L2 13h12L13 5z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 5V4a2 2 0 014 0v1" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
+    このデザインで注文
+  </button>
+</div>
+
+<div class="order-panel" id="orderPanel">
+  <div class="order-panel-title">ORDER SHEET ／ 注文内容</div>
+  <div class="order-summary" id="orderSummary"></div>
+  <div class="url-box">
+    <div class="url-label">▼ 共有URL（このURLを作家に送ると同じデザインが再現されます）</div>
+    <div class="url-text" id="shareUrl"></div>
+  </div>
+  <div class="order-btns">
+    <button class="order-btn copy" id="copyUrlBtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="9" height="10" rx="1.5" stroke="white" stroke-width="1.4"/><path d="M4 3V2a1 1 0 011-1h6a1 1 0 011 1v9a1 1 0 01-1 1h-1" stroke="white" stroke-width="1.4"/></svg>
+      URLをコピー
+    </button>
+    <button class="order-btn dl" id="orderDlBtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 4 3-4M1 11h12" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      画像を保存
+    </button>
+  </div>
+</div>
+
+<script>
+const fabrics = [
+  {
+    id: 'solid', label: '無地',
+    swatch: (c) => `<rect width="36" height="36" fill="${c}"/>`,
+    pattern: (uid, c) => `<rect width="240" height="300" fill="${c}"/>`,
+    needsColor: true,
+  },
+  {
+    id: 'check', label: 'チェック',
+    swatch: () => `<rect width="36" height="36" fill="#e8d6c0"/>
+      <line x1="9" y1="0" x2="9" y2="36" stroke="#b08060" stroke-width="1.5"/>
+      <line x1="18" y1="0" x2="18" y2="36" stroke="#b08060" stroke-width="1.5"/>
+      <line x1="27" y1="0" x2="27" y2="36" stroke="#b08060" stroke-width="1.5"/>
+      <line x1="0" y1="9" x2="36" y2="9" stroke="#b08060" stroke-width="1.5"/>
+      <line x1="0" y1="18" x2="36" y2="18" stroke="#b08060" stroke-width="1.5"/>
+      <line x1="0" y1="27" x2="36" y2="27" stroke="#b08060" stroke-width="1.5"/>`,
+    pattern: (uid) => `<rect width="240" height="300" fill="#e8d6c0"/>
+      <defs><pattern id="ck${uid}" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+        <rect width="20" height="20" fill="#e8d6c0"/>
+        <line x1="10" y1="0" x2="10" y2="20" stroke="#b08060" stroke-width="1.2" stroke-opacity="0.7"/>
+        <line x1="0" y1="10" x2="20" y2="10" stroke="#b08060" stroke-width="1.2" stroke-opacity="0.7"/>
+      </pattern></defs>
+      <rect width="240" height="300" fill="url(#ck${uid})"/>`,
+    needsColor: false,
+  },
+  {
+    id: 'dot', label: 'ドット',
+    swatch: () => `<rect width="36" height="36" fill="#f0e8f8"/>
+      <circle cx="9" cy="9" r="3" fill="#b07cc4"/>
+      <circle cx="27" cy="9" r="3" fill="#b07cc4"/>
+      <circle cx="9" cy="27" r="3" fill="#b07cc4"/>
+      <circle cx="27" cy="27" r="3" fill="#b07cc4"/>
+      <circle cx="18" cy="18" r="3" fill="#b07cc4"/>`,
+    pattern: (uid) => `<rect width="240" height="300" fill="#f0e8f8"/>
+      <defs><pattern id="dt${uid}" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
+        <rect width="22" height="22" fill="#f0e8f8"/>
+        <circle cx="11" cy="11" r="3.5" fill="#b07cc4" fill-opacity="0.7"/>
+      </pattern></defs>
+      <rect width="240" height="300" fill="url(#dt${uid})"/>`,
+    needsColor: false,
+  },
+  {
+    id: 'linen', label: 'リネン',
+    swatch: () => `<rect width="36" height="36" fill="#d4c4a8"/>
+      ${Array.from({length:12},(_,i)=>`<line x1="0" y1="${i*3+1}" x2="36" y2="${i*3+1}" stroke="#b8a888" stroke-width="0.8"/>`).join('')}
+      ${Array.from({length:12},(_,i)=>`<line x1="${i*3+1}" y1="0" x2="${i*3+1}" y2="36" stroke="#c0ae90" stroke-width="0.5" stroke-opacity="0.5"/>`).join('')}`,
+    pattern: (uid) => `<rect width="240" height="300" fill="#d4c4a8"/>
+      <defs><pattern id="ln${uid}" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+        <rect width="4" height="4" fill="#d4c4a8"/>
+        <line x1="0" y1="1" x2="4" y2="1" stroke="#b8a888" stroke-width="0.7" stroke-opacity="0.8"/>
+        <line x1="0" y1="3" x2="4" y2="3" stroke="#c0ae90" stroke-width="0.4" stroke-opacity="0.5"/>
+        <line x1="1" y1="0" x2="1" y2="4" stroke="#c4b494" stroke-width="0.4" stroke-opacity="0.4"/>
+        <line x1="3" y1="0" x2="3" y2="4" stroke="#b0a080" stroke-width="0.3" stroke-opacity="0.3"/>
+      </pattern></defs>
+      <rect width="240" height="300" fill="url(#ln${uid})"/>`,
+    needsColor: false,
+  },
+];
+
+const fontOptions = [
+  { value: "'Shippori Mincho', serif", label: '明朝体' },
+  { value: "'Noto Sans JP', sans-serif", label: 'ゴシック体' },
+  { value: "'Yomogi', cursive", label: '手書き風' },
+  { value: "'Zen Antique', serif", label: 'アンティーク' },
+];
+
+const patterns = [
+  { id: 'top',    label: 'うえ',    yFactor: 0.28 },
+  { id: 'center', label: 'まんなか', yFactor: 0.50 },
+  { id: 'bottom', label: 'した',    yFactor: 0.72 },
+  { id: 'slant',  label: 'ななめ',  yFactor: 0.50, rotate: -15 },
+];
+
+let state = {
+  name: 'Hanako',
+  font: "'Shippori Mincho', serif",
+  textColor: '#2c2016',
+  fabricId: 'solid',
+  fabricColor: '#7eb8c9',
+  fontSize: 26,
+  selectedPatternId: null,
+};
+
+// URLパラメータから復元
+function loadFromUrl() {
+  const p = new URLSearchParams(location.search);
+  if (p.get('name'))   state.name        = decodeURIComponent(p.get('name'));
+  if (p.get('font'))   state.font        = decodeURIComponent(p.get('font'));
+  if (p.get('color'))  state.textColor   = '#' + p.get('color');
+  if (p.get('fabric')) state.fabricId    = p.get('fabric');
+  if (p.get('fc'))     state.fabricColor = '#' + p.get('fc');
+  if (p.get('size'))   state.fontSize    = parseInt(p.get('size'));
+  if (p.get('pos'))    state.selectedPatternId = p.get('pos');
+}
+
+// 共有URL生成
+function buildShareUrl() {
+  const p = new URLSearchParams();
+  p.set('name',   encodeURIComponent(state.name));
+  p.set('font',   encodeURIComponent(state.font));
+  p.set('color',  state.textColor.replace('#', ''));
+  p.set('fabric', state.fabricId);
+  p.set('fc',     state.fabricColor.replace('#', ''));
+  p.set('size',   state.fontSize);
+  if (state.selectedPatternId) p.set('pos', state.selectedPatternId);
+  return location.origin + location.pathname + '?' + p.toString();
+}
+
+// 巾着SVG生成
+function buildBagSVG(pattern, st, uid) {
+  const fabric = fabrics.find(f => f.id === st.fabricId);
+  const fabricSVG = fabric.pattern(uid, st.fabricColor);
+  const bagShape = `M 20 80 Q 20 40 120 35 Q 220 40 220 80 L 215 240 Q 215 275 120 278 Q 25 275 25 240 Z`;
+  const nameY = 40 + pattern.yFactor * 230;
+  const nameX = 120;
+  const rot = pattern.rotate ? `rotate(${pattern.rotate}, ${nameX}, ${nameY})` : '';
+  return `<svg viewBox="0 0 240 310" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="bc${uid}"><path d="${bagShape}"/></clipPath>
+    <filter id="sh${uid}" x="-10%" y="-5%" width="120%" height="115%">
+      <feDropShadow dx="2" dy="4" stdDeviation="5" flood-color="#2c2016" flood-opacity="0.18"/>
+    </filter>
+    <linearGradient id="gl${uid}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="white" stop-opacity="0"/>
+      <stop offset="100%" stop-color="black" stop-opacity="0.08"/>
+    </linearGradient>
+  </defs>
+  <path d="M 65 38 Q 40 10 55 2 Q 68 -5 70 15 L 68 35" stroke="#5a4030" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M 175 38 Q 200 10 185 2 Q 172 -5 170 15 L 172 35" stroke="#5a4030" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="55" cy="2" r="4" fill="#4a3020"/>
+  <circle cx="185" cy="2" r="4" fill="#4a3020"/>
+  <g filter="url(#sh${uid})">
+    <g clip-path="url(#bc${uid})">${fabricSVG}
+      <rect width="240" height="300" fill="url(#gl${uid})"/>
+    </g>
+    <path d="${bagShape}" fill="none" stroke="#5a4030" stroke-width="2.5" stroke-opacity="0.5"/>
+  </g>
+  <rect x="20" y="58" width="200" height="24" fill="rgba(90,64,48,0.13)" rx="2"/>
+  <line x1="20" y1="58" x2="220" y2="58" stroke="#5a4030" stroke-width="1.5" stroke-opacity="0.35"/>
+  <line x1="20" y1="82" x2="220" y2="82" stroke="#5a4030" stroke-width="1.5" stroke-opacity="0.35"/>
+  <text x="${nameX}" y="${nameY}" text-anchor="middle" dominant-baseline="middle"
+    font-family="${st.font}" font-size="${st.fontSize}" fill="${st.textColor}"
+    transform="${rot}" style="filter:drop-shadow(0 1px 2px rgba(255,255,255,0.4))"
+  >${st.name || '　'}</text>
+</svg>`;
+}
+
+// スウォッチ生成
+function buildSwatches() {
+  const container = document.getElementById('fabricSwatches');
+  container.innerHTML = '';
+  fabrics.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'swatch' + (f.id === state.fabricId ? ' active' : '');
+    div.title = f.label;
+    div.innerHTML = `<svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">${f.swatch(state.fabricColor)}</svg>`;
+    div.addEventListener('click', () => {
+      state.fabricId = f.id;
+      document.getElementById('solidColorControl').style.display = f.needsColor ? '' : 'none';
+      buildSwatches();
+      render();
+    });
+    container.appendChild(div);
+  });
+}
+
+// レンダリング
+function render() {
+  document.getElementById('nameInput').value = state.name;
+  document.getElementById('textColor').value = state.textColor;
+  document.getElementById('textColorHex').textContent = state.textColor;
+  document.getElementById('fabricColor').value = state.fabricColor;
+  document.getElementById('fabricColorHex').textContent = state.fabricColor;
+  document.getElementById('fontSize').value = state.fontSize;
+  document.getElementById('fontSizeVal').textContent = state.fontSize;
+  const fs = document.getElementById('fontSelect');
+  for (let o of fs.options) { if (o.value === state.font) { o.selected = true; break; } }
+
+  const container = document.getElementById('previews');
+  container.innerHTML = '';
+  patterns.forEach((pat, i) => {
+    const card = document.createElement('div');
+    card.className = 'preview-card' + (state.selectedPatternId === pat.id ? ' selected' : '');
+
+    const badge = document.createElement('div');
+    badge.className = 'check-badge';
+    badge.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'preview-label';
+    lbl.textContent = pat.label;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'width:100%;display:flex;justify-content:center';
+    wrap.innerHTML = buildBagSVG(pat, state, `u${i}`);
+
+    card.appendChild(badge);
+    card.appendChild(lbl);
+    card.appendChild(wrap);
+    card.addEventListener('click', () => {
+      state.selectedPatternId = pat.id;
+      render();
+    });
+    container.appendChild(card);
+  });
+
+  document.getElementById('orderTriggerBtn').classList.toggle('active', !!state.selectedPatternId);
+
+  if (document.getElementById('orderPanel').classList.contains('visible')) {
+    updateOrderPanel();
+  }
+}
+
+// 注文パネル更新
+function updateOrderPanel() {
+  const pat = patterns.find(p => p.id === state.selectedPatternId);
+  const fab = fabrics.find(f => f.id === state.fabricId);
+  const fontLabel = fontOptions.find(f => f.value === state.font)?.label || '';
+  const rows = [
+    ['位置',     pat?.label || '-'],
+    ['布地',     fab?.label || '-'],
+    ['フォント', fontLabel],
+    ['サイズ',   `${state.fontSize}pt`],
+    ['文字色',   state.textColor.toUpperCase()],
+    ['お名前',   state.name || '-'],
+  ];
+  document.getElementById('orderSummary').innerHTML = rows.map(([k,v]) =>
+    `<div class="order-summary-row"><span class="ok">${k}</span><span class="ov">${v}</span></div>`
+  ).join('');
+  document.getElementById('shareUrl').textContent = buildShareUrl();
+}
+
+// 注文ボタン
+document.getElementById('orderTriggerBtn').addEventListener('click', () => {
+  if (!state.selectedPatternId) return;
+  const panel = document.getElementById('orderPanel');
+  updateOrderPanel();
+  panel.classList.add('visible');
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+});
+
+// URLコピー
+document.getElementById('copyUrlBtn').addEventListener('click', () => {
+  navigator.clipboard.writeText(buildShareUrl()).then(() => {
+    const btn = document.getElementById('copyUrlBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7l3 3 7-7" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg> コピーしました！`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="9" height="10" rx="1.5" stroke="white" stroke-width="1.4"/><path d="M4 3V2a1 1 0 011-1h6a1 1 0 011 1v9a1 1 0 01-1 1h-1" stroke="white" stroke-width="1.4"/></svg> URLをコピー`;
+    }, 2000);
+  });
+});
+
+// 画像保存
+document.getElementById('orderDlBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('orderDlBtn');
+  btn.classList.add('saving');
+  const pat = patterns.find(p => p.id === state.selectedPatternId);
+  if (!pat) { btn.classList.remove('saving'); return; }
+
+  try {
+    const bagW = 300, bagH = 380, pad = 28, infoH = 120;
+    const canvasW = bagW + pad * 2;
+    const canvasH = bagH + infoH + pad * 2 + 24;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasW * 2; canvas.height = canvasH * 2;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+
+    ctx.fillStyle = '#faf7f2'; ctx.fillRect(0, 0, canvasW, canvasH);
+    ctx.fillStyle = '#7a6a5a'; ctx.font = "10px sans-serif"; ctx.textAlign = 'center';
+    ctx.fillText('巾着袋 名入れシミュレーター', canvasW / 2, 18);
+
+    await new Promise(resolve => {
+      const blob = new Blob([buildBagSVG(pat, state, 'dl')], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => { ctx.drawImage(img, pad, 26, bagW, bagH); URL.revokeObjectURL(url); resolve(); };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+      img.src = url;
+    });
+
+    const panelY = 26 + bagH + 14;
+    ctx.fillStyle = '#2c2016';
+    rrect(ctx, pad, panelY, canvasW - pad*2, infoH, 10); ctx.fill();
+
+    const fab = fabrics.find(f => f.id === state.fabricId);
+    const fontLabel = fontOptions.find(f => f.value === state.font)?.label || '';
+    const lines = [
+      `位置: ${pat.label}　布地: ${fab?.label}　フォント: ${fontLabel}`,
+      `サイズ: ${state.fontSize}pt　文字色: ${state.textColor.toUpperCase()}　お名前: ${state.name || '-'}`,
+    ];
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = "9px sans-serif"; ctx.textAlign = 'left';
+    lines.forEach((line, i) => ctx.fillText(line, pad + 14, panelY + 20 + i * 16));
+
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(pad + 10, panelY + 50, canvasW - pad*2 - 20, 1);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.38)'; ctx.font = "8px sans-serif";
+    ctx.fillText('共有URL:', pad + 14, panelY + 66);
+    ctx.fillStyle = '#aaddf0'; ctx.font = "7px monospace";
+    const url = buildShareUrl();
+    ctx.fillText(url.length > 90 ? url.slice(0,90)+'…' : url, pad + 14, panelY + 80);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = "7px sans-serif"; ctx.textAlign = 'center';
+    ctx.fillText('このURLを作家に送るとデザインが再現されます', canvasW/2, panelY + infoH - 10);
+
+    const link = document.createElement('a');
+    const safe = (state.name || 'order').replace(/[^\w\u3040-\u9FFF]/g, '_');
+    link.download = `order_${safe}_${state.selectedPatternId}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } finally { btn.classList.remove('saving'); }
+});
+
+function rrect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+
+// コントロールイベント
+document.getElementById('nameInput').addEventListener('input', e => { state.name = e.target.value; render(); });
+document.getElementById('fontSelect').addEventListener('change', e => { state.font = e.target.value; render(); });
+document.getElementById('textColor').addEventListener('input', e => { state.textColor = e.target.value; document.getElementById('textColorHex').textContent = e.target.value; render(); });
+document.getElementById('fabricColor').addEventListener('input', e => { state.fabricColor = e.target.value; document.getElementById('fabricColorHex').textContent = e.target.value; buildSwatches(); render(); });
+document.getElementById('fontSize').addEventListener('input', e => { state.fontSize = parseInt(e.target.value); document.getElementById('fontSizeVal').textContent = e.target.value; render(); });
+
+// 初期化
+loadFromUrl();
+buildSwatches();
+document.getElementById('solidColorControl').style.display = fabrics.find(f => f.id === state.fabricId)?.needsColor ? '' : 'none';
+render();
+// URLから復元時は注文パネルも自動表示
+if (state.selectedPatternId) {
+  const panel = document.getElementById('orderPanel');
+  updateOrderPanel();
+  panel.classList.add('visible');
+}
+</script>
+</body>
+</html>
