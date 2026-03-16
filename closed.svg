@@ -1,0 +1,41 @@
+<svg viewBox="0 0 240 310" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto">
+  <!--
+    nemukuta 巾着袋プレビュー用SVG - 絞った状態
+    ルール:
+      - id="name-text" の <text> 要素に名前・フォント・色がJSから自動で差し込まれます
+      - name-text の x/y/text-anchor/dominant-baseline はここで自由に調整してください
+      - このファイルを差し替えるだけでデザインを更新できます
+  -->
+  <defs>
+    <filter id="shadow-closed" x="-15%" y="-5%" width="130%" height="115%">
+      <feDropShadow dx="1" dy="3" stdDeviation="5" flood-color="#7a4050" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <!-- ひも -->
+  <path d="M 107 58 L 84 18 Q 74 2 62 12 Q 54 22 68 30 L 104 57"
+        fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 133 58 L 156 18 Q 166 2 178 12 Q 186 22 172 30 L 136 57"
+        fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 62 12 Q 56 4 64 2 Q 72 0 70 10" fill="none" stroke="#8a6858" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 178 12 Q 184 4 176 2 Q 168 0 170 10" fill="none" stroke="#8a6858" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- 袋本体（プレースホルダー：実デザインに差し替えてください） -->
+  <g filter="url(#shadow-closed)">
+    <path d="M 22 240 Q 22 278 120 280 Q 218 278 218 240 L 218 131 C 218 131,210 100,132 64 C 127 61,123 58,120 57 C 117 58,113 61,108 64 C 30 100,22 131,22 131 Z"
+          fill="#d4c4a8" stroke="#9a7070" stroke-width="1.8" stroke-opacity="0.45"/>
+  </g>
+
+  <!-- 絞り口 -->
+  <path d="M 110 59 Q 120 53 130 59 Q 121 63 120 64 Q 119 63 110 59 Z"
+        fill="rgba(80,40,40,0.15)" stroke="#9a7070" stroke-width="1" stroke-opacity="0.4"/>
+
+  <!-- 名前テキスト差し込み位置 (JSが font-family / font-size / fill / textContent を上書きします) -->
+  <text id="name-text"
+        x="120" y="210"
+        text-anchor="middle"
+        dominant-baseline="middle"
+        font-family="sans-serif"
+        font-size="18"
+        fill="#5a3e4b">名前</text>
+</svg>

@@ -135,7 +135,7 @@
   .order-btn.dl.saving { opacity: 0.5; pointer-events: none; }
 
   @media (min-width: 600px) {
-    .previews { grid-template-columns: repeat(4, 1fr); padding: 0 16px 16px; gap: 14px; }
+    .previews { grid-template-columns: 1fr 1fr; padding: 0 16px 16px; gap: 20px; }
     .control-grid { grid-template-columns: repeat(4, 1fr); }
     .name-size-row { grid-column: span 4; }
     .order-trigger-area { padding: 4px 16px 16px; }
@@ -192,8 +192,8 @@
   </div>
 </div>
 
-<div class="previews-title">▼ 4パターン プレビュー</div>
-<div class="select-hint">タップしてデザインを選んでください</div>
+<div class="previews-title">▼ デザインプレビュー</div>
+<div class="select-hint">気に入ったほうをタップして選んでください</div>
 <div class="previews" id="previews"></div>
 
 <div class="order-trigger-area">
@@ -290,10 +290,8 @@ const fontOptions = [
 ];
 
 const patterns = [
-  { id: 'top',    label: 'うえ',    yFactor: 0.28 },
-  { id: 'center', label: 'まんなか', yFactor: 0.50 },
-  { id: 'bottom', label: 'した',    yFactor: 0.72 },
-  { id: 'slant',  label: 'ななめ',  yFactor: 0.50, rotate: -15 },
+  { id: 'closed', label: '絞った状態' },
+  { id: 'open',   label: '広げた状態' },
 ];
 
 let state = {
@@ -331,44 +329,148 @@ function buildShareUrl() {
   return location.origin + location.pathname + '?' + p.toString();
 }
 
-// 巾着SVG生成
-function buildBagSVG(pattern, st, uid) {
+// ===== 絞った巾着SVG =====
+function buildClosedBagSVG(st, uid) {
   const fabric = fabrics.find(f => f.id === st.fabricId);
   const fabricSVG = fabric.pattern(uid, st.fabricColor);
-  const bagShape = `M 20 80 Q 20 40 120 35 Q 220 40 220 80 L 215 240 Q 215 275 120 278 Q 25 275 25 240 Z`;
-  const nameY = 40 + pattern.yFactor * 230;
-  const nameX = 120;
-  const rot = pattern.rotate ? `rotate(${pattern.rotate}, ${nameX}, ${nameY})` : '';
+
+  // 上1/3がすぼまり、下2/3は四角い形
+  // 袋の高さ: y=56(口元) 〜 y=280(底) → 高さ224
+  // 上1/3のすぼまり境界: y=56+75=131あたり
+  const bodyPath = `
+    M 22 240 Q 22 278 120 280 Q 218 278 218 240
+    L 218 131 C 218 131, 210 100, 132 64 C 127 61, 123 58, 120 57
+    C 117 58, 113 61, 108 64 C 30 100, 22 131, 22 131 Z
+  `;
+  // 口元のつまみ
+  const tipPath = `M 110 59 Q 120 53 130 59 Q 121 63 120 64 Q 119 63 110 59 Z`;
+  // すぼまり境界のしわライン
+  const gathers = [
+    `M 22 131 C 60 118, 90 112, 120 111 C 150 112, 180 118, 218 131`,
+    `M 28 115 C 62 105, 92 100, 120 99 C 148 100, 178 105, 212 115`,
+  ];
+  // ひも
+  const ropeL = `M 107 58 L 84 18 Q 74 2 62 12 Q 54 22 68 30 L 104 57`;
+  const ropeR = `M 133 58 L 156 18 Q 166 2 178 12 Q 186 22 172 30 L 136 57`;
+  const knotL = `M 62 12 Q 56 4 64 2 Q 72 0 70 10`;
+  const knotR = `M 178 12 Q 184 4 176 2 Q 168 0 170 10`;
+
+  const nameFontSize = Math.max(10, Math.round(st.fontSize * 0.72));
+
   return `<svg viewBox="0 0 240 310" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <clipPath id="bc${uid}"><path d="${bagShape}"/></clipPath>
-    <filter id="sh${uid}" x="-10%" y="-5%" width="120%" height="115%">
-      <feDropShadow dx="2" dy="4" stdDeviation="5" flood-color="#2c2016" flood-opacity="0.18"/>
+    <clipPath id="bc${uid}"><path d="${bodyPath}"/></clipPath>
+    <filter id="sh${uid}" x="-15%" y="-5%" width="130%" height="115%">
+      <feDropShadow dx="1" dy="3" stdDeviation="5" flood-color="#7a4050" flood-opacity="0.14"/>
     </filter>
     <linearGradient id="gl${uid}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="white" stop-opacity="0.18"/>
-      <stop offset="60%" stop-color="white" stop-opacity="0"/>
-      <stop offset="100%" stop-color="black" stop-opacity="0.08"/>
+      <stop offset="0%" stop-color="white" stop-opacity="0.22"/>
+      <stop offset="55%" stop-color="white" stop-opacity="0"/>
+      <stop offset="100%" stop-color="black" stop-opacity="0.07"/>
     </linearGradient>
   </defs>
-  <path d="M 65 38 Q 40 10 55 2 Q 68 -5 70 15 L 68 35" stroke="#5a4030" stroke-width="4" fill="none" stroke-linecap="round"/>
-  <path d="M 175 38 Q 200 10 185 2 Q 172 -5 170 15 L 172 35" stroke="#5a4030" stroke-width="4" fill="none" stroke-linecap="round"/>
-  <circle cx="55" cy="2" r="4" fill="#4a3020"/>
-  <circle cx="185" cy="2" r="4" fill="#4a3020"/>
+  <!-- ひも -->
+  <path d="${ropeL}" fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="${ropeR}" fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="${knotL}" fill="none" stroke="#8a6858" stroke-width="3" stroke-linecap="round"/>
+  <path d="${knotR}" fill="none" stroke="#8a6858" stroke-width="3" stroke-linecap="round"/>
+  <!-- 袋本体 -->
   <g filter="url(#sh${uid})">
     <g clip-path="url(#bc${uid})">${fabricSVG}
       <rect width="240" height="300" fill="url(#gl${uid})"/>
     </g>
-    <path d="${bagShape}" fill="none" stroke="#5a4030" stroke-width="2.5" stroke-opacity="0.5"/>
+    <path d="${bodyPath}" fill="none" stroke="#9a7070" stroke-width="1.8" stroke-opacity="0.45"/>
   </g>
-  <rect x="20" y="58" width="200" height="24" fill="rgba(90,64,48,0.13)" rx="2"/>
-  <line x1="20" y1="58" x2="220" y2="58" stroke="#5a4030" stroke-width="1.5" stroke-opacity="0.35"/>
-  <line x1="20" y1="82" x2="220" y2="82" stroke="#5a4030" stroke-width="1.5" stroke-opacity="0.35"/>
-  <text x="${nameX}" y="${nameY}" text-anchor="middle" dominant-baseline="middle"
-    font-family="${st.font}" font-size="${st.fontSize}" fill="${st.textColor}"
-    transform="${rot}" style="filter:drop-shadow(0 1px 2px rgba(255,255,255,0.4))"
+  <!-- 絞り口つまみ -->
+  <path d="${tipPath}" fill="rgba(80,40,40,0.15)" stroke="#9a7070" stroke-width="1" stroke-opacity="0.4"/>
+  <!-- すぼまり部分のしわ -->
+  ${gathers.map(d => `<path d="${d}" fill="none" stroke="#9a7070" stroke-width="0.9" stroke-opacity="0.25" stroke-linecap="round"/>`).join('')}
+  <!-- 名前テキスト（下2/3の中央） -->
+  <text x="120" y="210" text-anchor="middle" dominant-baseline="middle"
+    font-family="${st.font}" font-size="${nameFontSize}" fill="${st.textColor}"
+    style="filter:drop-shadow(0 1px 2px rgba(255,255,255,0.5))"
   >${st.name || '　'}</text>
 </svg>`;
+}
+
+// ===== 広げた巾着SVG =====
+function buildOpenBagSVG(st, uid) {
+  const fabric = fabrics.find(f => f.id === st.fabricId);
+  const fabricSVG = fabric.pattern(uid, st.fabricColor);
+  // 口が開いた四角形に近い形
+  const bodyPath = `M 22 74 Q 24 58 120 56 Q 216 58 218 74 L 218 242 Q 218 280 120 282 Q 22 280 22 242 Z`;
+  const foldPath = `M 22 74 Q 24 58 120 56 Q 216 58 218 74 Q 210 84 120 86 Q 30 84 22 74 Z`;
+  const ropeL = `M 38 70 L 24 28 Q 16 8 8 18 Q 2 30 16 38 L 32 68`;
+  const ropeR = `M 202 70 L 216 28 Q 224 8 232 18 Q 238 30 224 38 L 208 68`;
+  const knotL = `M 8 18 Q 2 10 10 8 Q 18 6 16 16`;
+  const knotR = `M 232 18 Q 238 10 230 8 Q 222 6 224 16`;
+
+  return `<svg viewBox="0 0 240 310" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="bc${uid}"><path d="${bodyPath}"/></clipPath>
+    <filter id="sh${uid}" x="-10%" y="-5%" width="120%" height="115%">
+      <feDropShadow dx="1" dy="3" stdDeviation="5" flood-color="#7a4050" flood-opacity="0.14"/>
+    </filter>
+    <linearGradient id="gl${uid}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="0.22"/>
+      <stop offset="55%" stop-color="white" stop-opacity="0"/>
+      <stop offset="100%" stop-color="black" stop-opacity="0.07"/>
+    </linearGradient>
+  </defs>
+  <path d="${ropeL}" fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="${ropeR}" fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="${knotL}" fill="none" stroke="#8a6858" stroke-width="3" stroke-linecap="round"/>
+  <path d="${knotR}" fill="none" stroke="#8a6858" stroke-width="3" stroke-linecap="round"/>
+  <g filter="url(#sh${uid})">
+    <g clip-path="url(#bc${uid})">${fabricSVG}
+      <rect width="240" height="300" fill="url(#gl${uid})"/>
+    </g>
+    <path d="${bodyPath}" fill="none" stroke="#9a7070" stroke-width="1.8" stroke-opacity="0.45"/>
+  </g>
+  <path d="${foldPath}" fill="rgba(80,40,40,0.07)" stroke="#9a7070" stroke-width="1.2" stroke-opacity="0.35"/>
+  <line x1="22" y1="86" x2="218" y2="86" stroke="#9a7070" stroke-width="0.8" stroke-opacity="0.2"/>
+  <text x="120" y="185" text-anchor="middle" dominant-baseline="middle"
+    font-family="${st.font}" font-size="${st.fontSize}" fill="${st.textColor}"
+    style="filter:drop-shadow(0 1px 2px rgba(255,255,255,0.5))"
+  >${st.name || '　'}</text>
+</svg>`;
+}
+
+// 巾着SVG生成（パターンで振り分け）
+function buildBagSVG(pattern, st, uid) {
+  if (pattern.id === 'closed') return buildClosedBagSVG(st, uid);
+  return buildOpenBagSVG(st, uid);
+}
+
+// ===== SVGキャッシュ＆fetch =====
+const svgCache = {};
+
+async function fetchSVG(patternId) {
+  if (svgCache[patternId]) return svgCache[patternId];
+  try {
+    const res = await fetch(`svg/${patternId}.svg`);
+    if (!res.ok) throw new Error('not found');
+    const text = await res.text();
+    svgCache[patternId] = text;
+    return text;
+  } catch {
+    return null; // fetchできなければnull → プロトタイプSVGにフォールバック
+  }
+}
+
+// SVGテキストに名前・フォント・色を差し込む
+// SVG側に id="name-text" の <text> 要素を用意しておく
+function injectName(svgText, st) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgText, 'image/svg+xml');
+  const el = doc.getElementById('name-text');
+  if (el) {
+    el.textContent = st.name || '';
+    el.setAttribute('font-family', st.font);
+    el.setAttribute('font-size', st.fontSize);
+    el.setAttribute('fill', st.textColor);
+  }
+  return new XMLSerializer().serializeToString(doc.documentElement);
 }
 
 // スウォッチ生成
@@ -391,7 +493,7 @@ function buildSwatches() {
 }
 
 // レンダリング
-function render() {
+async function render() {
   document.getElementById('nameInput').value = state.name;
   document.getElementById('textColor').value = state.textColor;
   document.getElementById('textColorHex').textContent = state.textColor;
@@ -404,7 +506,9 @@ function render() {
 
   const container = document.getElementById('previews');
   container.innerHTML = '';
-  patterns.forEach((pat, i) => {
+
+  for (let i = 0; i < patterns.length; i++) {
+    const pat = patterns[i];
     const card = document.createElement('div');
     card.className = 'preview-card' + (state.selectedPatternId === pat.id ? ' selected' : '');
 
@@ -418,7 +522,17 @@ function render() {
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'width:100%;display:flex;justify-content:center';
-    wrap.innerHTML = buildBagSVG(pat, state, `u${i}`);
+
+    // SVGファイルをfetch → あればそちらを使い、なければプロトタイプSVGにフォールバック
+    const fetchedSVG = await fetchSVG(pat.id);
+    if (fetchedSVG) {
+      wrap.innerHTML = injectName(fetchedSVG, state);
+      // fetchしたSVGにレスポンシブ幅を適用
+      const svgEl = wrap.querySelector('svg');
+      if (svgEl) { svgEl.style.width = '100%'; svgEl.style.height = 'auto'; }
+    } else {
+      wrap.innerHTML = buildBagSVG(pat, state, `u${i}`);
+    }
 
     card.appendChild(badge);
     card.appendChild(lbl);
@@ -428,7 +542,7 @@ function render() {
       render();
     });
     container.appendChild(card);
-  });
+  }
 
   document.getElementById('orderTriggerBtn').classList.toggle('active', !!state.selectedPatternId);
 
