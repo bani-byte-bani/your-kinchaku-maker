@@ -172,9 +172,9 @@
   .order-summary-row .ok { color: rgba(255,255,255,0.45); }
   .order-summary-row .ov { color: #fff; font-weight: bold; }
 
-  .order-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .order-btns { display: flex; flex-direction: column; gap: 10px; }
   .order-btn {
-    flex: 1; min-width: 130px; padding: 10px 0; border-radius: 20px; border: none;
+    padding: 10px 0; border-radius: 20px; border: none;
     font-family: 'Noto Sans JP', sans-serif; font-size: 0.8rem; letter-spacing: 0.04em;
     cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
     background: var(--accent); color: #fff; transition: opacity 0.18s;
@@ -182,8 +182,45 @@
   .order-btn.secondary { background: rgba(255,255,255,0.15); }
   .order-btn:hover { opacity: 0.82; }
   .order-btn.saving { opacity: 0.5; pointer-events: none; }
-  .order-form-note { text-align: center; font-size: 0.68rem; color: rgba(255,255,255,0.75); margin-top: 10px; min-height: 1em; }
-  .order-form-note.error { color: #f5b0b0; }
+
+  /* ---------- 注文情報入力（個人情報） ---------- */
+  .checkout-panel {
+    display: none; margin: 0 12px 28px;
+    background: linear-gradient(145deg, #5a3e4b, #7a4e5e); color: #fff;
+    border-radius: 20px; padding: 20px 18px 18px;
+    animation: slideUp 0.25s ease;
+  }
+  .checkout-panel.visible { display: block; }
+  .checkout-panel-title { font-family: 'Zen Maru Gothic', sans-serif; font-size: 0.75rem; letter-spacing: 0.12em; color: rgba(255,255,255,0.55); margin-bottom: 14px; }
+
+  .checkout-field { margin-bottom: 12px; }
+  .checkout-field label { display: block; font-size: 0.68rem; color: rgba(255,255,255,0.55); letter-spacing: 0.06em; margin-bottom: 5px; }
+  .checkout-field input {
+    width: 100%; border: 1.5px solid rgba(255,255,255,0.18); border-radius: 14px;
+    background: rgba(255,255,255,0.08); color: #fff; padding: 9px 12px; font-size: 0.85rem;
+    font-family: 'Noto Sans JP', sans-serif; outline: none; transition: border-color 0.2s;
+  }
+  .checkout-field input::placeholder { color: rgba(255,255,255,0.35); }
+  .checkout-field input:focus { border-color: var(--accent2); }
+
+  .privacy-box { background: rgba(255,255,255,0.06); border-radius: 14px; padding: 14px; margin: 16px 0 6px; }
+  .privacy-title { font-family: 'Zen Maru Gothic', sans-serif; font-size: 0.75rem; letter-spacing: 0.08em; margin-bottom: 8px; color: rgba(255,255,255,0.8); }
+  .privacy-text { font-size: 0.68rem; line-height: 1.7; color: rgba(255,255,255,0.55); margin-bottom: 12px; white-space: pre-line; }
+  .privacy-agree { display: flex; align-items: flex-start; gap: 8px; font-size: 0.72rem; color: rgba(255,255,255,0.85); cursor: pointer; }
+  .privacy-agree input { margin-top: 2px; accent-color: var(--accent); }
+
+  .checkout-note { text-align: center; font-size: 0.68rem; color: rgba(255,255,255,0.75); margin: 12px 0 4px; min-height: 1em; }
+  .checkout-note.error { color: #f5b0b0; }
+
+  .checkout-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .checkout-back-btn {
+    background: none; border: 1.5px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.7);
+    border-radius: 20px; padding: 10px 0; font-size: 0.8rem; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .checkout-back-btn:hover { border-color: rgba(255,255,255,0.5); }
+  #checkoutSubmitBtn { opacity: 0.35; pointer-events: none; }
+  #checkoutSubmitBtn.ready { opacity: 1; pointer-events: auto; }
 
   .build-footer {
     text-align: center; font-size: 0.6rem; color: var(--subtext);
@@ -196,6 +233,7 @@
     .name-size-row { grid-column: span 4; }
     .order-trigger-area { padding: 4px 16px 16px; }
     .order-panel { margin: 0 16px 28px; }
+    .checkout-panel { margin: 0 16px 28px; }
   }
 </style>
 </head>
@@ -281,7 +319,44 @@
       この内容で注文する
     </button>
   </div>
-  <div class="order-form-note" id="orderFormNote"></div>
+</div>
+
+<div class="checkout-panel" id="checkoutPanel">
+  <div class="checkout-panel-title">ご注文情報のご入力</div>
+
+  <div class="checkout-field">
+    <label for="customerName">お名前（ご注文者様）</label>
+    <input type="text" id="customerName" placeholder="山田 花子">
+  </div>
+  <div class="checkout-field">
+    <label for="customerAddress">ご住所</label>
+    <input type="text" id="customerAddress" placeholder="〒000-0000 ○○県○○市○○ 1-2-3">
+  </div>
+  <div class="checkout-field">
+    <label for="customerPhone">電話番号</label>
+    <input type="tel" id="customerPhone" placeholder="090-0000-0000">
+  </div>
+
+  <div class="privacy-box">
+    <div class="privacy-title">個人情報の取り扱いについて</div>
+    <div class="privacy-text">ご入力いただいたお名前・ご住所・電話番号は、本注文の確認およびお届けの目的にのみ利用いたします。
+法令に基づく場合を除き、ご本人の同意なく第三者へ提供することはありません。
+お預かりした情報は、注文対応が完了した後、適切な期間内に破棄・削除いたします。</div>
+    <label class="privacy-agree">
+      <input type="checkbox" id="privacyAgree">
+      上記内容に同意して注文を確定する
+    </label>
+  </div>
+
+  <div class="checkout-note" id="checkoutNote"></div>
+
+  <div class="checkout-btns">
+    <button type="button" class="checkout-back-btn" id="checkoutBackBtn">注文内容の確認に戻る</button>
+    <button class="order-btn" id="checkoutSubmitBtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7l12-6-4 12-3-5-5-1z" stroke="white" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      登録する
+    </button>
+  </div>
 </div>
 
 <footer class="build-footer" id="buildFooter"></footer>
@@ -294,7 +369,7 @@
    ============================================================ */
 
 // デプロイ確認用のビルド識別子。変更をpushするたびに手で更新してください。
-const BUILD_VERSION = '2026-07-24-4';
+const BUILD_VERSION = '2026-07-24-5';
 
 // Googleフォーム連携設定（「nemukuta巾着ご注文フォーム」の entry ID に対応）
 const GOOGLE_FORM = {
@@ -307,6 +382,11 @@ const GOOGLE_FORM = {
     fontSize: 'entry.1610397005',  // 文字サイズ
     textColor: 'entry.185350393',  // 文字色
     orderId: 'entry.1588473019',   // 注文ID
+    // 氏名・住所・電話番号はフォームに質問が未追加のため entry ID 未設定。
+    // 追加後にここへ 'entry.xxxxxxxxx' を設定すると送信対象に含まれる。
+    customerName: '',    // 氏名（ご注文者様）
+    customerAddress: '', // 住所
+    customerPhone: '',   // 電話番号
   },
 };
 
@@ -433,6 +513,7 @@ const state = {
   ...DEFAULTS,
   namePos: {}, // { [shapeId]: {dx, dy, scale} } ドラッグで調整した位置・サイズ
   orderId: null, // 注文パネルを開いたときに発行
+  customer: { name: '', address: '', phone: '', agreed: false },
 };
 
 const find = {
@@ -710,7 +791,11 @@ const el = {
   orderPanel: $('orderPanel'), orderThumbImg: $('orderThumbImg'),
   tnName: $('tnName'), tnFont: $('tnFont'), tnChip: $('tnChip'), tnColor: $('tnColor'),
   orderSummary: $('orderSummary'), orderDlBtn: $('orderDlBtn'), orderFormBtn: $('orderFormBtn'),
-  orderFormNote: $('orderFormNote'), buildFooter: $('buildFooter'),
+  checkoutPanel: $('checkoutPanel'), customerName: $('customerName'),
+  customerAddress: $('customerAddress'), customerPhone: $('customerPhone'),
+  privacyAgree: $('privacyAgree'), checkoutNote: $('checkoutNote'),
+  checkoutBackBtn: $('checkoutBackBtn'), checkoutSubmitBtn: $('checkoutSubmitBtn'),
+  buildFooter: $('buildFooter'),
 };
 
 /** プレビューカードの参照 { shapeId: {card, svg} } */
@@ -1025,7 +1110,15 @@ async function submitOrderToGoogleForm() {
   params.set(e.fontSize, String(state.fontSize));
   params.set(e.textColor, state.textColor.toUpperCase());
   params.set(e.orderId, state.orderId || '');
+  if (e.customerName) params.set(e.customerName, state.customer.name);
+  if (e.customerAddress) params.set(e.customerAddress, state.customer.address);
+  if (e.customerPhone) params.set(e.customerPhone, state.customer.phone);
   await fetch(GOOGLE_FORM.actionUrl, { method: 'POST', mode: 'no-cors', body: params });
+}
+
+function checkoutValid() {
+  const c = state.customer;
+  return Boolean(c.name.trim() && c.address.trim() && c.phone.trim() && c.agreed);
 }
 
 /* ============================================================
@@ -1057,18 +1150,41 @@ el.orderDlBtn.addEventListener('click', async () => {
   finally { el.orderDlBtn.classList.remove('saving'); }
 });
 
-el.orderFormBtn.addEventListener('click', async () => {
-  el.orderFormBtn.classList.add('saving');
-  el.orderFormNote.classList.remove('error');
-  el.orderFormNote.textContent = '送信中…';
+el.orderFormBtn.addEventListener('click', () => {
+  el.orderPanel.classList.remove('visible');
+  el.checkoutPanel.classList.add('visible');
+  setTimeout(() => el.checkoutPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+});
+
+el.checkoutBackBtn.addEventListener('click', () => {
+  el.checkoutPanel.classList.remove('visible');
+  el.orderPanel.classList.add('visible');
+  setTimeout(() => el.orderPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+});
+
+el.customerName.addEventListener('input', e => { state.customer.name = e.target.value; syncCheckoutState(); });
+el.customerAddress.addEventListener('input', e => { state.customer.address = e.target.value; syncCheckoutState(); });
+el.customerPhone.addEventListener('input', e => { state.customer.phone = e.target.value; syncCheckoutState(); });
+el.privacyAgree.addEventListener('change', e => { state.customer.agreed = e.target.checked; syncCheckoutState(); });
+
+function syncCheckoutState() {
+  el.checkoutSubmitBtn.classList.toggle('ready', checkoutValid());
+}
+
+el.checkoutSubmitBtn.addEventListener('click', async () => {
+  if (!checkoutValid()) return;
+  el.checkoutSubmitBtn.classList.add('saving');
+  el.checkoutNote.classList.remove('error');
+  el.checkoutNote.textContent = '送信中…';
   try {
     await submitOrderToGoogleForm();
-    el.orderFormNote.textContent = `ご注文を受け付けました（注文ID: ${state.orderId}）`;
+    el.checkoutNote.textContent = `ご注文を受け付けました（注文ID: ${state.orderId}）`;
+    el.checkoutSubmitBtn.classList.remove('ready');
   } catch {
-    el.orderFormNote.classList.add('error');
-    el.orderFormNote.textContent = '送信に失敗しました。通信環境をご確認のうえ再度お試しください。';
+    el.checkoutNote.classList.add('error');
+    el.checkoutNote.textContent = '送信に失敗しました。通信環境をご確認のうえ再度お試しください。';
   } finally {
-    el.orderFormBtn.classList.remove('saving');
+    el.checkoutSubmitBtn.classList.remove('saving');
   }
 });
 
