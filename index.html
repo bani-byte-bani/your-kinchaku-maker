@@ -286,6 +286,21 @@
 // 注文メールの送り先。実際の受付アドレスに書き換えてください。
 const ORDER_EMAIL = 'order@example.com';
 
+// Googleフォーム連携設定（「nemukuta巾着ご注文フォーム」の entry ID に対応）
+// 送信ロジックは未実装。fetch で actionUrl に entries の各キーを name=entry.xxxxx として POST する想定。
+const GOOGLE_FORM = {
+  actionUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdunHM73RWgK_WoeCQB5LDts3i7-gTpeH3WhsPOjhVLdOoKQQ/formResponse',
+  entries: {
+    name: 'entry.534055580',       // お名前
+    shape: 'entry.772177483',      // かたち
+    fabric: 'entry.1764386526',    // 布地
+    font: 'entry.349949928',       // フォント
+    fontSize: 'entry.1610397005',  // 文字サイズ
+    textColor: 'entry.185350393',  // 文字色
+    orderId: 'entry.1588473019',   // 注文ID
+  },
+};
+
 /* ============================================================
    1. 定数・データ定義
    ============================================================ */
