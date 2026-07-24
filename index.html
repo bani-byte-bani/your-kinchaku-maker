@@ -227,6 +227,18 @@
     opacity: 0.55; padding: 4px 0 18px; letter-spacing: 0.04em;
   }
 
+  .test-banner {
+    position: sticky; top: 0; z-index: 100;
+    background: repeating-linear-gradient(135deg, #f7d33c, #f7d33c 12px, #2a2a2a 12px, #2a2a2a 24px);
+    color: #2a2a2a; text-align: center;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+    padding: 7px 10px;
+  }
+  .test-banner span {
+    background: #fff9e0; padding: 2px 10px; border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
   @media (min-width: 600px) {
     .previews { padding: 0 16px 8px; gap: 20px; }
     .control-grid { grid-template-columns: repeat(4, 1fr); }
@@ -238,6 +250,8 @@
 </style>
 </head>
 <body>
+
+<div class="test-banner"><span>⚠ テスト運用中（本番ではありません）</span></div>
 
 <header>
   <div class="brand">nemukuta</div>
