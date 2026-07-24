@@ -182,6 +182,8 @@
   .order-btn.secondary { background: rgba(255,255,255,0.15); }
   .order-btn:hover { opacity: 0.82; }
   .order-btn.saving { opacity: 0.5; pointer-events: none; }
+  .order-form-note { text-align: center; font-size: 0.68rem; color: rgba(255,255,255,0.75); margin-top: 10px; min-height: 1em; }
+  .order-form-note.error { color: #f5b0b0; }
 
   .build-footer {
     text-align: center; font-size: 0.6rem; color: var(--subtext);
@@ -274,11 +276,12 @@
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 4 3-4M1 11h12" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       画像を保存
     </button>
-    <button class="order-btn secondary" id="orderMailBtn">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="10" rx="1.5" stroke="white" stroke-width="1.4"/><path d="M1 3l6 5 6-5" stroke="white" stroke-width="1.4"/></svg>
-      メールで注文する
+    <button class="order-btn secondary" id="orderFormBtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7l12-6-4 12-3-5-5-1z" stroke="white" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      この内容で注文する
     </button>
   </div>
+  <div class="order-form-note" id="orderFormNote"></div>
 </div>
 
 <footer class="build-footer" id="buildFooter"></footer>
@@ -290,14 +293,10 @@
    0. 設定（触ってよい定数）
    ============================================================ */
 
-// 注文メールの送り先。実際の受付アドレスに書き換えてください。
-const ORDER_EMAIL = 'order@example.com';
-
 // デプロイ確認用のビルド識別子。変更をpushするたびに手で更新してください。
-const BUILD_VERSION = '2026-07-24-3';
+const BUILD_VERSION = '2026-07-24-4';
 
 // Googleフォーム連携設定（「nemukuta巾着ご注文フォーム」の entry ID に対応）
-// 送信ロジックは未実装。fetch で actionUrl に entries の各キーを name=entry.xxxxx として POST する想定。
 const GOOGLE_FORM = {
   actionUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSdunHM73RWgK_WoeCQB5LDts3i7-gTpeH3WhsPOjhVLdOoKQQ/formResponse',
   entries: {
@@ -433,6 +432,7 @@ const DEFAULTS = {
 const state = {
   ...DEFAULTS,
   namePos: {}, // { [shapeId]: {dx, dy, scale} } ドラッグで調整した位置・サイズ
+  orderId: null, // 注文パネルを開いたときに発行
 };
 
 const find = {
@@ -709,8 +709,8 @@ const el = {
   orderTriggerBtn: $('orderTriggerBtn'), orderTriggerNote: $('orderTriggerNote'),
   orderPanel: $('orderPanel'), orderThumbImg: $('orderThumbImg'),
   tnName: $('tnName'), tnFont: $('tnFont'), tnChip: $('tnChip'), tnColor: $('tnColor'),
-  orderSummary: $('orderSummary'), orderDlBtn: $('orderDlBtn'), orderMailBtn: $('orderMailBtn'),
-  buildFooter: $('buildFooter'),
+  orderSummary: $('orderSummary'), orderDlBtn: $('orderDlBtn'), orderFormBtn: $('orderFormBtn'),
+  orderFormNote: $('orderFormNote'), buildFooter: $('buildFooter'),
 };
 
 /** プレビューカードの参照 { shapeId: {card, svg} } */
@@ -856,6 +856,7 @@ function syncOrderPanel() {
   el.tnColor.textContent = state.textColor.toUpperCase();
 
   const rows = [
+    ['注文ID',     state.orderId || '-'],
     ['布地',       find.fabric().label],
     ['フォント',   find.font().label],
     ['文字サイズ', `${state.fontSize}pt`],
@@ -999,24 +1000,32 @@ async function downloadImage() {
 }
 
 /* ============================================================
-   10. メールで注文
+   10. Googleフォームへ注文送信
+   ------------------------------------------------------------
+   フォームはCORS非対応のため mode: 'no-cors' でPOSTする
+   （レスポンス内容は読めないが送信自体は成立する）
    ============================================================ */
 
-function buildOrderMailto() {
+function generateOrderId() {
+  const now = new Date();
+  const stamp = [now.getFullYear(), now.getMonth() + 1, now.getDate()]
+    .map((n, i) => i === 0 ? n : String(n).padStart(2, '0')).join('');
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `NKT-${stamp}-${rand}`;
+}
+
+async function submitOrderToGoogleForm() {
   const shape = find.shape();
-  const subject = `【nemukuta】巾着袋ご注文（${state.name || 'お名前未入力'}様）`;
-  const lines = [
-    `お名前：${state.name || '-'}`,
-    `かたち：${shape ? shape.label : '-'}`,
-    `布地：${find.fabric().label}`,
-    `フォント：${find.font().label}`,
-    `文字サイズ：${state.fontSize}pt`,
-    `文字色：${state.textColor.toUpperCase()}`,
-    '',
-    '※ プレビュー画像は別途「画像を保存」してこのメールに添付してください。',
-  ];
-  const body = lines.join('\n');
-  return `mailto:${ORDER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const e = GOOGLE_FORM.entries;
+  const params = new URLSearchParams();
+  params.set(e.name, state.name);
+  params.set(e.shape, shape ? shape.label : '');
+  params.set(e.fabric, find.fabric().label);
+  params.set(e.font, find.font().label);
+  params.set(e.fontSize, String(state.fontSize));
+  params.set(e.textColor, state.textColor.toUpperCase());
+  params.set(e.orderId, state.orderId || '');
+  await fetch(GOOGLE_FORM.actionUrl, { method: 'POST', mode: 'no-cors', body: params });
 }
 
 /* ============================================================
@@ -1036,6 +1045,7 @@ el.resetPosBtn.addEventListener('click', resetNamePositions);
 
 el.orderTriggerBtn.addEventListener('click', () => {
   if (!state.shapeId || !validateName(state.name).valid) return;
+  if (!state.orderId) state.orderId = generateOrderId();
   el.orderPanel.classList.add('visible');
   syncOrderPanel();
   setTimeout(() => el.orderPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
@@ -1047,8 +1057,19 @@ el.orderDlBtn.addEventListener('click', async () => {
   finally { el.orderDlBtn.classList.remove('saving'); }
 });
 
-el.orderMailBtn.addEventListener('click', () => {
-  window.location.href = buildOrderMailto();
+el.orderFormBtn.addEventListener('click', async () => {
+  el.orderFormBtn.classList.add('saving');
+  el.orderFormNote.classList.remove('error');
+  el.orderFormNote.textContent = '送信中…';
+  try {
+    await submitOrderToGoogleForm();
+    el.orderFormNote.textContent = `ご注文を受け付けました（注文ID: ${state.orderId}）`;
+  } catch {
+    el.orderFormNote.classList.add('error');
+    el.orderFormNote.textContent = '送信に失敗しました。通信環境をご確認のうえ再度お試しください。';
+  } finally {
+    el.orderFormBtn.classList.remove('saving');
+  }
 });
 
 /* ============================================================
