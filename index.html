@@ -406,6 +406,7 @@ const GOOGLE_FORM = {
     customerName: 'entry.1367845733',    // 氏名（ご注文者様）
     customerAddress: 'entry.2034250152', // 住所（フォーム側で必須）
     customerPhone: 'entry.208065438',    // 電話番号
+    customerEmail: 'entry.1481357071',   // メールアドレス
   },
 };
 
@@ -1139,6 +1140,7 @@ async function submitOrderToGoogleForm() {
   if (e.customerName) params.set(e.customerName, state.customer.name);
   if (e.customerAddress) params.set(e.customerAddress, state.customer.address);
   if (e.customerPhone) params.set(e.customerPhone, state.customer.phone);
+  if (e.customerEmail) params.set(e.customerEmail, state.customer.email);
   await fetch(GOOGLE_FORM.actionUrl, { method: 'POST', mode: 'no-cors', body: params });
 }
 
@@ -1278,7 +1280,10 @@ el.checkoutSubmitBtn.addEventListener('click', async () => {
   buildSwatches();
   await buildPreviewCards();
 
-  if (state.shapeId) el.orderPanel.classList.add('visible');
+  if (state.shapeId) {
+    if (!state.orderId) state.orderId = generateOrderId(); // URLのshape復元で注文パネルが直接開く経路にも発行を保証
+    el.orderPanel.classList.add('visible');
+  }
 
   refresh();
 
