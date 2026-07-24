@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>注文状況の確認 | nemukuta</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fdf6f0;
+    --panel: #ffffff;
+    --accent: #e8829a;
+    --accent2: #f0a8b8;
+    --text: #5a3e4b;
+    --subtext: #a08090;
+    --border: #f0dde5;
+    --shadow: rgba(180,120,140,0.10);
+    --warn: #c0392b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; }
+
+  /* ---------- ヘッダー（index.htmlと統一） ---------- */
+  header {
+    background: linear-gradient(135deg, #f7c5d0 0%, #fde8c8 100%);
+    color: var(--text);
+    padding: 22px 20px 16px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  header::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: 18px 18px; opacity: 0.5;
+  }
+  header .brand { font-size: 0.68rem; letter-spacing: 0.25em; color: var(--accent); margin-bottom: 4px; position: relative; font-weight: 500; }
+  header h1 { font-family: 'Zen Maru Gothic', sans-serif; font-size: 1.2rem; letter-spacing: 0.1em; position: relative; font-weight: 700; }
+  header p { font-size: 0.68rem; color: var(--subtext); margin-top: 5px; letter-spacing: 0.08em; position: relative; }
+
+  /* ---------- 検索エリア ---------- */
+  .search-panel { background: var(--panel); border-bottom: 1px solid var(--border); padding: 16px 16px 14px; }
+  .search-row { display: flex; gap: 8px; }
+  .search-row input[type="text"] {
+    flex: 1; min-width: 0; border: 1.5px solid var(--border); border-radius: 20px;
+    background: var(--bg); color: var(--text); outline: none;
+    font-family: 'Noto Sans JP', sans-serif; padding: 10px 16px; font-size: 0.95rem;
+    transition: border-color 0.2s; letter-spacing: 0.03em;
+  }
+  .search-row input[type="text"]:focus { border-color: var(--accent); }
+  .search-row button {
+    flex-shrink: 0; border: none; border-radius: 20px; padding: 10px 20px;
+    background: linear-gradient(135deg, var(--accent), #f0a0b4); color: #fff;
+    font-family: 'Zen Maru Gothic', sans-serif; font-size: 0.85rem; letter-spacing: 0.05em;
+    cursor: pointer; box-shadow: 0 3px 10px rgba(232,130,154,0.3);
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .search-row button:active { transform: scale(0.97); }
+  .search-row button:disabled { opacity: 0.5; pointer-events: none; }
+  .field-msg { font-size: 0.66rem; color: var(--warn); margin-top: 6px; min-height: 1em; }
+
+  /* ---------- 結果エリア ---------- */
+  .status-area { padding: 4px 16px 28px; }
+
+  .status-message { display: none; align-items: center; justify-content: center; gap: 8px; text-align: center; border-radius: 16px; padding: 16px; font-size: 0.82rem; margin-top: 14px; }
+  .status-message.visible { display: flex; }
+  .status-message.loading,
+  .status-message.info { background: var(--panel); color: var(--subtext); box-shadow: 0 2px 14px var(--shadow); }
+  .status-message.error { background: #fdecea; color: var(--warn); }
+
+  .spinner {
+    width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-result-panel {
+    display: none; margin-top: 16px;
+    background: linear-gradient(145deg, #5a3e4b, #7a4e5e); color: #fff;
+    border-radius: 20px; padding: 20px 18px 18px;
+    animation: slideUp 0.25s ease;
+  }
+  .status-result-panel.visible { display: block; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .status-result-title { font-family: 'Zen Maru Gothic', sans-serif; font-size: 0.75rem; letter-spacing: 0.12em; color: rgba(255,255,255,0.55); margin-bottom: 18px; }
+
+  .status-steps { display: flex; align-items: flex-start; margin-bottom: 6px; }
+  .status-step { display: flex; flex-direction: column; align-items: center; flex: 0 0 auto; width: 64px; }
+  .step-circle {
+    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem; font-weight: 700; border: 2px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.05); transition: all 0.2s;
+  }
+  .step-check { display: none; }
+  .status-step.done .step-circle { background: var(--accent2); border-color: var(--accent2); color: #5a3e4b; }
+  .status-step.done .step-num { display: none; }
+  .status-step.done .step-check { display: inline; }
+  .status-step.current .step-circle { background: #fff; border-color: #fff; color: var(--text); box-shadow: 0 0 0 4px rgba(255,255,255,0.18); }
+  .step-label { font-size: 0.66rem; margin-top: 6px; color: rgba(255,255,255,0.5); letter-spacing: 0.04em; text-align: center; }
+  .status-step.current .step-label,
+  .status-step.done .step-label { color: #fff; font-weight: 700; }
+
+  .status-step-line { flex: 1; height: 2px; background: rgba(255,255,255,0.15); margin-top: 15px; transition: background 0.2s; }
+  .status-step-line.done { background: var(--accent2); }
+
+  .status-raw-note { font-size: 0.66rem; color: rgba(255,255,255,0.5); text-align: center; margin: 10px 0 4px; }
+  .status-raw-note:empty { display: none; margin: 0; }
+
+  .status-info { border-top: 1px solid rgba(255,255,255,0.12); margin-top: 18px; padding-top: 12px; }
+  .status-info-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; font-size: 0.82rem; }
+  .info-label { color: rgba(255,255,255,0.5); flex-shrink: 0; }
+  .info-value { color: #fff; font-weight: 600; word-break: break-all; text-align: right; margin-left: 12px; }
+
+  @media (min-width: 600px) {
+    .search-panel { padding: 20px 20px 16px; }
+    .status-area { padding: 4px 20px 32px; }
+    .status-result-panel { padding: 24px 22px 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">nemukuta</div>
+  <h1>注文状況の確認</h1>
+  <p>注文番号を入力すると製作状況を確認できます</p>
+</header>
+
+<div class="search-panel">
+  <div class="search-row">
+    <input type="text" id="orderIdInput" placeholder="NKT-XXXXXXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <button type="button" id="searchBtn">確認する</button>
+  </div>
+  <div class="field-msg" id="inputMsg"></div>
+</div>
+
+<div class="status-area">
+  <div class="status-message loading" id="loadingMsg">
+    <span class="spinner"></span><span>確認しています…</span>
+  </div>
+  <div class="status-message error" id="notFoundMsg">
+    <span>該当する注文が見つかりませんでした</span>
+  </div>
+  <div class="status-message error" id="networkErrorMsg">
+    <span>通信エラーが発生しました。しばらくしてから再度お試しください。</span>
+  </div>
+  <div class="status-message info" id="notConfiguredMsg">
+    <span>まだ状況確認の仕組みが設定されていません</span>
+  </div>
+
+  <div class="status-result-panel" id="resultPanel">
+    <div class="status-result-title">製作状況</div>
+
+    <div class="status-steps" id="statusSteps">
+      <div class="status-step" data-key="received">
+        <div class="step-circle"><span class="step-check">✓</span><span class="step-num">1</span></div>
+        <div class="step-label">受付</div>
+      </div>
+      <div class="status-step-line" data-line="0"></div>
+      <div class="status-step" data-key="in_production">
+        <div class="step-circle"><span class="step-check">✓</span><span class="step-num">2</span></div>
+        <div class="step-label">製作中</div>
+      </div>
+      <div class="status-step-line" data-line="1"></div>
+      <div class="status-step" data-key="shipped">
+        <div class="step-circle"><span class="step-check">✓</span><span class="step-num">3</span></div>
+        <div class="step-label">発送済</div>
+      </div>
+    </div>
+    <div class="status-raw-note" id="statusRawNote"></div>
+
+    <div class="status-info">
+      <div class="status-info-row"><span class="info-label">注文番号</span><span class="info-value" id="resOrderId"></span></div>
+      <div class="status-info-row"><span class="info-label">お名前</span><span class="info-value" id="resName"></span></div>
+      <div class="status-info-row"><span class="info-label">注文日</span><span class="info-value" id="resOrderedAt"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   設定
+   ============================================================ */
+
+// 状況確認APIのエンドポイント（未設定の間は空文字のまま）
+const STATUS_API_URL = 'https://script.google.com/macros/s/AKfycbwjoUr4TopJijf4bezufYiheWisUeZShKWiTpf22gRbQABgfaMD2rUes--fKlIv_C7bzA/exec';
+
+// ステータス表示の3段階。API の status 値が key か label のどちらで
+// 返ってきても拾えるよう両方と照合する。
+const STEP_ORDER = [
+  { key: 'received',       labels: ['受付', '注文受付'] },
+  { key: 'in_production',  labels: ['製作中'] },
+  { key: 'shipped',        labels: ['発送済', '発送済み'] },
+];
+
+/* ============================================================
+   要素参照
+   ============================================================ */
+
+const el = {
+  orderIdInput: document.getElementById('orderIdInput'),
+  searchBtn: document.getElementById('searchBtn'),
+  inputMsg: document.getElementById('inputMsg'),
+  loadingMsg: document.getElementById('loadingMsg'),
+  notFoundMsg: document.getElementById('notFoundMsg'),
+  networkErrorMsg: document.getElementById('networkErrorMsg'),
+  notConfiguredMsg: document.getElementById('notConfiguredMsg'),
+  resultPanel: document.getElementById('resultPanel'),
+  statusSteps: document.getElementById('statusSteps'),
+  statusRawNote: document.getElementById('statusRawNote'),
+  resOrderId: document.getElementById('resOrderId'),
+  resName: document.getElementById('resName'),
+  resOrderedAt: document.getElementById('resOrderedAt'),
+};
+
+const allMessages = [el.loadingMsg, el.notFoundMsg, el.networkErrorMsg, el.notConfiguredMsg];
+
+/* ============================================================
+   表示状態の切り替え
+   ============================================================ */
+
+function hideAllStates() {
+  allMessages.forEach(m => m.classList.remove('visible'));
+  el.resultPanel.classList.remove('visible');
+}
+
+function showLoading() {
+  el.inputMsg.textContent = '';
+  hideAllStates();
+  el.loadingMsg.classList.add('visible');
+}
+
+function showNotFound() {
+  hideAllStates();
+  el.notFoundMsg.classList.add('visible');
+}
+
+function showNetworkError() {
+  hideAllStates();
+  el.networkErrorMsg.classList.add('visible');
+}
+
+function showNotConfigured() {
+  hideAllStates();
+  el.notConfiguredMsg.classList.add('visible');
+}
+
+function matchStepIndex(status) {
+  const s = String(status || '').trim();
+  if (!s) return -1;
+  return STEP_ORDER.findIndex(step => step.key === s || step.labels.includes(s));
+}
+
+function showResult(data) {
+  hideAllStates();
+
+  const idx = matchStepIndex(data.status);
+  const steps = [...el.statusSteps.querySelectorAll('.status-step')];
+  const lines = [...el.statusSteps.querySelectorAll('.status-step-line')];
+
+  steps.forEach((stepEl, i) => {
+    stepEl.classList.remove('done', 'current', 'todo');
+    stepEl.classList.add(idx === -1 ? 'todo' : i < idx ? 'done' : i === idx ? 'current' : 'todo');
+  });
+  lines.forEach((lineEl, i) => {
+    lineEl.classList.toggle('done', idx !== -1 && i < idx);
+  });
+
+  // 未知のステータス値が来た場合も生の値を隠さずに表示する
+  el.statusRawNote.textContent = idx === -1 ? String(data.status || '') : '';
+
+  // API由来の値は textContent のみで描画し、HTML解釈させないことでXSSを防ぐ
+  el.resOrderId.textContent = data.orderId || '';
+  el.resName.textContent = data.name || '';
+  el.resOrderedAt.textContent = data.orderedAt || '';
+
+  el.resultPanel.classList.add('visible');
+}
+
+/* ============================================================
+   検索
+   ============================================================ */
+
+let searching = false;
+
+async function performSearch(rawOrderId) {
+  const orderId = (rawOrderId || '').trim();
+
+  if (!orderId) {
+    el.inputMsg.textContent = '注文番号を入力してください';
+    hideAllStates();
+    return;
+  }
+  el.inputMsg.textContent = '';
+
+  if (!STATUS_API_URL) {
+    showNotConfigured();
+    return;
+  }
+
+  if (searching) return;
+  searching = true;
+  el.searchBtn.disabled = true;
+  showLoading();
+
+  try {
+    const res = await fetch(`${STATUS_API_URL}?id=${encodeURIComponent(orderId)}`);
+    if (!res.ok) {
+      showNetworkError();
+      return;
+    }
+    const data = await res.json();
+    if (!data || !data.found) {
+      showNotFound();
+      return;
+    }
+    showResult(data);
+  } catch (err) {
+    showNetworkError();
+  } finally {
+    searching = false;
+    el.searchBtn.disabled = false;
+  }
+}
+
+el.searchBtn.addEventListener('click', () => performSearch(el.orderIdInput.value));
+el.orderIdInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    performSearch(el.orderIdInput.value);
+  }
+});
+
+/* ============================================================
+   初期化（URLの ?id=NKT-XXXXXXXX-XXXX を自動検索）
+   ============================================================ */
+
+(function init() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if (id) {
+    el.orderIdInput.value = id;
+    performSearch(id);
+  }
+})();
+</script>
+
+</body>
+</html>
