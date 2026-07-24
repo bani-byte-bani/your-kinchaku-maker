@@ -212,6 +212,8 @@
 
   .checkout-note { text-align: center; font-size: 0.68rem; color: rgba(255,255,255,0.75); margin: 12px 0 4px; min-height: 1em; }
   .checkout-note.error { color: #f5b0b0; }
+  .checkout-note a { color: var(--accent2); font-weight: 700; text-decoration: underline; }
+  .checkout-note .status-link-row { margin-top: 6px; }
 
   .checkout-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
   .checkout-back-btn {
@@ -1196,7 +1198,19 @@ el.checkoutSubmitBtn.addEventListener('click', async () => {
   el.checkoutNote.textContent = '送信中…';
   try {
     await submitOrderToGoogleForm();
-    el.checkoutNote.textContent = `ご注文を受け付けました（注文ID: ${state.orderId}）`;
+    el.checkoutNote.innerHTML = '';
+    const msg = document.createElement('div');
+    msg.textContent = `ご注文を受け付けました（注文ID: ${state.orderId}）`;
+    el.checkoutNote.appendChild(msg);
+    const linkRow = document.createElement('div');
+    linkRow.className = 'status-link-row';
+    const link = document.createElement('a');
+    link.href = `status.html?id=${encodeURIComponent(state.orderId)}`;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = '注文状況を確認する';
+    linkRow.appendChild(link);
+    el.checkoutNote.appendChild(linkRow);
     el.checkoutSubmitBtn.classList.remove('ready');
   } catch {
     el.checkoutNote.classList.add('error');
