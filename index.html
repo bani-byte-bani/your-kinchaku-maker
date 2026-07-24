@@ -183,6 +183,11 @@
   .order-btn:hover { opacity: 0.82; }
   .order-btn.saving { opacity: 0.5; pointer-events: none; }
 
+  .build-footer {
+    text-align: center; font-size: 0.6rem; color: var(--subtext);
+    opacity: 0.55; padding: 4px 0 18px; letter-spacing: 0.04em;
+  }
+
   @media (min-width: 600px) {
     .previews { padding: 0 16px 8px; gap: 20px; }
     .control-grid { grid-template-columns: repeat(4, 1fr); }
@@ -276,6 +281,8 @@
   </div>
 </div>
 
+<footer class="build-footer" id="buildFooter"></footer>
+
 <script>
 'use strict';
 
@@ -285,6 +292,9 @@
 
 // 注文メールの送り先。実際の受付アドレスに書き換えてください。
 const ORDER_EMAIL = 'order@example.com';
+
+// デプロイ確認用のビルド識別子。変更をpushするたびに手で更新してください。
+const BUILD_VERSION = '2026-07-24-3';
 
 // Googleフォーム連携設定（「nemukuta巾着ご注文フォーム」の entry ID に対応）
 // 送信ロジックは未実装。fetch で actionUrl に entries の各キーを name=entry.xxxxx として POST する想定。
@@ -700,6 +710,7 @@ const el = {
   orderPanel: $('orderPanel'), orderThumbImg: $('orderThumbImg'),
   tnName: $('tnName'), tnFont: $('tnFont'), tnChip: $('tnChip'), tnColor: $('tnColor'),
   orderSummary: $('orderSummary'), orderDlBtn: $('orderDlBtn'), orderMailBtn: $('orderMailBtn'),
+  buildFooter: $('buildFooter'),
 };
 
 /** プレビューカードの参照 { shapeId: {card, svg} } */
@@ -824,7 +835,7 @@ function syncPreviews() {
   const nameOk = validateName(state.name).valid;
   el.orderTriggerBtn.classList.toggle('active', Boolean(state.shapeId) && nameOk);
   el.orderTriggerNote.textContent = (!state.shapeId)
-    ? ''
+    ? 'デザインプレビューを選んでください'
     : (!nameOk ? 'お名前を確認してください' : '');
 }
 
@@ -1045,6 +1056,7 @@ el.orderMailBtn.addEventListener('click', () => {
    ============================================================ */
 
 (async function init() {
+  el.buildFooter.textContent = `build ${BUILD_VERSION}`;
   await loadShapesConfig();
   loadFromUrl();
   buildFontOptions();
