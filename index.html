@@ -1225,6 +1225,7 @@ function syncCheckoutState() {
 
 el.checkoutSubmitBtn.addEventListener('click', async () => {
   if (!checkoutValid()) return;
+  if (!state.orderId) state.orderId = generateOrderId(); // 通常はorderTriggerBtnで発行済みだが念のため
   el.checkoutSubmitBtn.classList.add('saving');
   el.checkoutNote.classList.remove('error');
   el.checkoutNote.textContent = '送信中…';
