@@ -346,6 +346,10 @@
     <input type="text" id="customerName" placeholder="山田 花子">
   </div>
   <div class="checkout-field">
+    <label for="customerEmail">メールアドレス</label>
+    <input type="email" id="customerEmail" placeholder="example@mail.com" inputmode="email">
+  </div>
+  <div class="checkout-field">
     <label for="customerAddress">ご住所</label>
     <input type="text" id="customerAddress" placeholder="〒000-0000 ○○県○○市○○ 1-2-3">
   </div>
@@ -415,6 +419,7 @@ const STATUS_API_URL = 'https://script.google.com/macros/s/AKfycbwjoUr4TopJijf4b
 const VIEWBOX = { w: 240, h: 310 };   // SVGの座標系（svg/*.svg と揃えること）
 const SVG_DIR = 'svg';                // 外部SVG置き場
 const NAME_MAX = 20;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // --- 布地 ---
 // defs(uid, color) : <pattern> 等の定義（不要なら空文字）
@@ -531,7 +536,7 @@ const state = {
   ...DEFAULTS,
   namePos: {}, // { [shapeId]: {dx, dy, scale} } ドラッグで調整した位置・サイズ
   orderId: null, // 注文パネルを開いたときに発行
-  customer: { name: '', address: '', phone: '', agreed: false },
+  customer: { name: '', email: '', address: '', phone: '', agreed: false },
 };
 
 const find = {
@@ -810,6 +815,7 @@ const el = {
   tnName: $('tnName'), tnFont: $('tnFont'), tnChip: $('tnChip'), tnColor: $('tnColor'),
   orderSummary: $('orderSummary'), orderDlBtn: $('orderDlBtn'), orderFormBtn: $('orderFormBtn'),
   checkoutPanel: $('checkoutPanel'), customerName: $('customerName'),
+  customerEmail: $('customerEmail'),
   customerAddress: $('customerAddress'), customerPhone: $('customerPhone'),
   privacyAgree: $('privacyAgree'), checkoutNote: $('checkoutNote'),
   checkoutBackBtn: $('checkoutBackBtn'), checkoutSubmitBtn: $('checkoutSubmitBtn'),
@@ -1136,9 +1142,34 @@ async function submitOrderToGoogleForm() {
   await fetch(GOOGLE_FORM.actionUrl, { method: 'POST', mode: 'no-cors', body: params });
 }
 
+/** 注文確認メールをGAS(STATUS_API_URLと同じWebアプリ)経由で送信する */
+async function sendConfirmationEmail() {
+  if (!STATUS_API_URL) return { ok: false, error: 'STATUS_API_URL is not set' };
+  const shape = find.shape();
+  const payload = {
+    action: 'sendConfirmation',
+    orderId: state.orderId || '',
+    email: state.customer.email.trim(),
+    name: state.customer.name,
+    shape: shape ? shape.label : '',
+    fabric: find.fabric().label,
+    font: find.font().label,
+    fontSize: state.fontSize,
+    textColor: state.textColor.toUpperCase(),
+    statusUrl: `${location.origin}${location.pathname.replace(/index\.html$/, '')}status.html?id=${encodeURIComponent(state.orderId || '')}`,
+  };
+  const res = await fetch(STATUS_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
+  return res.json();
+}
+
 function checkoutValid() {
   const c = state.customer;
-  return Boolean(c.name.trim() && c.address.trim() && c.phone.trim() && c.agreed);
+  return Boolean(c.name.trim() && EMAIL_RE.test(c.email.trim()) && c.address.trim() && c.phone.trim() && c.agreed);
 }
 
 /* ============================================================
@@ -1183,6 +1214,7 @@ el.checkoutBackBtn.addEventListener('click', () => {
 });
 
 el.customerName.addEventListener('input', e => { state.customer.name = e.target.value; syncCheckoutState(); });
+el.customerEmail.addEventListener('input', e => { state.customer.email = e.target.value; syncCheckoutState(); });
 el.customerAddress.addEventListener('input', e => { state.customer.address = e.target.value; syncCheckoutState(); });
 el.customerPhone.addEventListener('input', e => { state.customer.phone = e.target.value; syncCheckoutState(); });
 el.privacyAgree.addEventListener('change', e => { state.customer.agreed = e.target.checked; syncCheckoutState(); });
@@ -1212,6 +1244,18 @@ el.checkoutSubmitBtn.addEventListener('click', async () => {
     linkRow.appendChild(link);
     el.checkoutNote.appendChild(linkRow);
     el.checkoutSubmitBtn.classList.remove('ready');
+
+    // 確認メールの送否は注文自体の成否とは切り離す（届かなくても注文は成立している）
+    try {
+      const mailResult = await sendConfirmationEmail();
+      if (!mailResult || !mailResult.ok) throw new Error('mail send failed');
+    } catch {
+      const mailNote = document.createElement('div');
+      mailNote.className = 'status-link-row';
+      mailNote.style.color = '#f5b0b0';
+      mailNote.textContent = '確認メールの送信に失敗しました。上記リンクから状況をご確認ください。';
+      el.checkoutNote.appendChild(mailNote);
+    }
   } catch {
     el.checkoutNote.classList.add('error');
     el.checkoutNote.textContent = '送信に失敗しました。通信環境をご確認のうえ再度お試しください。';
