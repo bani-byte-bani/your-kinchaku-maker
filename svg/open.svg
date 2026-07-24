@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 310">
+  <!--
+    nemukuta 巾着袋プレビュー ／ 広げた状態
+
+    ■ このファイルの約束ごと（差し替え時もこれだけ守ればOK）
+      1. viewBox は "0 0 240 310" のままにする
+      2. 布地を塗りたい図形に  id="bag-fabric"（複数なら class="bag-fabric"）
+      3. 名前を入れたい位置に  <text id="name-text">
+      4. それ以外（ひも・影・ステッチ等）は自由に描いてください
+  -->
+
+  <defs>
+    <filter id="shadow-open" x="-10%" y="-5%" width="120%" height="115%">
+      <feDropShadow dx="1" dy="3" stdDeviation="5" flood-color="#7a4050" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <!-- ひも -->
+  <path d="M 38 70 L 24 28 Q 16 8 8 18 Q 2 30 16 38 L 32 68"
+        fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 202 70 L 216 28 Q 224 8 232 18 Q 238 30 224 38 L 208 68"
+        fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 8 18 Q 2 10 10 8 Q 18 6 16 16" fill="none" stroke="#8a6858" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 232 18 Q 238 10 230 8 Q 222 6 224 16" fill="none" stroke="#8a6858" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- 袋本体（布地が入る図形） -->
+  <g filter="url(#shadow-open)">
+    <path id="bag-fabric"
+          d="M 22 74 Q 24 58 120 56 Q 216 58 218 74 L 218 242 Q 218 280 120 282 Q 22 280 22 242 Z"
+          fill="#d4c4a8" stroke="#9a7070" stroke-width="1.8" stroke-opacity="0.45"/>
+  </g>
+
+  <!-- 口元の折り返し -->
+  <path d="M 22 74 Q 24 58 120 56 Q 216 58 218 74 Q 210 84 120 86 Q 30 84 22 74 Z"
+        fill="rgba(80,40,40,0.07)" stroke="#9a7070" stroke-width="1.2" stroke-opacity="0.35"/>
+  <line x1="22" y1="86" x2="218" y2="86" stroke="#9a7070" stroke-width="0.8" stroke-opacity="0.2"/>
+
+  <!-- 名前（内容は自動で入ります） -->
+  <text id="name-text" x="120" y="185"
+        text-anchor="middle" dominant-baseline="middle"
+        font-family="sans-serif" font-size="26" fill="#5a3e4b"></text>
+</svg>

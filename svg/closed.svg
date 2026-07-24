@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 310">
+  <!--
+    nemukuta 巾着袋プレビュー ／ 絞った状態
+
+    ■ このファイルの約束ごと（差し替え時もこれだけ守ればOK）
+      1. viewBox は "0 0 240 310" のままにする
+      2. 布地を塗りたい図形に  id="bag-fabric"（複数なら class="bag-fabric"）
+         → 選ばれた布地パターンが fill に自動で入ります
+      3. 名前を入れたい位置に  <text id="name-text">
+         → 文字・フォント・サイズ・色が自動で入ります（中身は空でOK）
+      4. それ以外（ひも・影・ステッチ等）は自由に描いてください
+  -->
+
+  <defs>
+    <filter id="shadow-closed" x="-15%" y="-5%" width="130%" height="115%">
+      <feDropShadow dx="1" dy="3" stdDeviation="5" flood-color="#7a4050" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <!-- ひも -->
+  <path d="M 107 58 L 84 18 Q 74 2 62 12 Q 54 22 68 30 L 104 57"
+        fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 133 58 L 156 18 Q 166 2 178 12 Q 186 22 172 30 L 136 57"
+        fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 62 12 Q 56 4 64 2 Q 72 0 70 10" fill="none" stroke="#8a6858" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 178 12 Q 184 4 176 2 Q 168 0 170 10" fill="none" stroke="#8a6858" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- 袋本体（布地が入る図形） -->
+  <g filter="url(#shadow-closed)">
+    <path id="bag-fabric"
+          d="M 22 240 Q 22 278 120 280 Q 218 278 218 240 L 218 131
+             C 218 131,210 100,132 64 C 127 61,123 58,120 57
+             C 117 58,113 61,108 64 C 30 100,22 131,22 131 Z"
+          fill="#d4c4a8" stroke="#9a7070" stroke-width="1.8" stroke-opacity="0.45"/>
+  </g>
+
+  <!-- ギャザーのしわ -->
+  <path d="M 22 131 C 60 118, 90 112, 120 111 C 150 112, 180 118, 218 131"
+        fill="none" stroke="#9a7070" stroke-width="0.9" stroke-opacity="0.25" stroke-linecap="round"/>
+  <path d="M 28 115 C 62 105, 92 100, 120 99 C 148 100, 178 105, 212 115"
+        fill="none" stroke="#9a7070" stroke-width="0.9" stroke-opacity="0.25" stroke-linecap="round"/>
+
+  <!-- 絞り口 -->
+  <path d="M 110 59 Q 120 53 130 59 Q 121 63 120 64 Q 119 63 110 59 Z"
+        fill="rgba(80,40,40,0.15)" stroke="#9a7070" stroke-width="1" stroke-opacity="0.4"/>
+
+  <!-- 名前（内容は自動で入ります） -->
+  <text id="name-text" x="120" y="210"
+        text-anchor="middle" dominant-baseline="middle"
+        font-family="sans-serif" font-size="18" fill="#5a3e4b"></text>
+</svg>
