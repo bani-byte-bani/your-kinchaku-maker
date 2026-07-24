@@ -931,8 +931,10 @@ function syncOrderPanel() {
 
   const src = slots.get(shape.id);
   if (src) {
+    const thumbSvg = src.svg.cloneNode(true);
+    thumbSvg.querySelectorAll('.name-resize-handle').forEach(h => h.remove());
     el.orderThumbImg.innerHTML = '';
-    el.orderThumbImg.appendChild(src.svg.cloneNode(true));
+    el.orderThumbImg.appendChild(thumbSvg);
   }
 
   el.tnName.textContent = state.name || '（未入力）';
