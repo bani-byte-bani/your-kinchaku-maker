@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>巾着袋デザインプレビュー | nemukuta</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Yomogi&family=Noto+Sans+JP:wght@400;500&family=Shippori+Mincho:wght@400;600&family=Zen+Antique&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fdf6f0;
+    --panel: #ffffff;
+    --accent: #e8829a;
+    --accent2: #f0a8b8;
+    --text: #5a3e4b;
+    --subtext: #a08090;
+    --border: #f0dde5;
+    --shadow: rgba(180,120,140,0.10);
+    --warn: #c0392b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; }
+
+  /* ---------- ヘッダー ---------- */
+  header {
+    background: linear-gradient(135deg, #f7c5d0 0%, #fde8c8 100%);
+    color: var(--text);
+    padding: 22px 20px 16px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  header::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: 18px 18px; opacity: 0.5;
+  }
+  header .brand { font-size: 0.68rem; letter-spacing: 0.25em; color: var(--accent); margin-bottom: 4px; position: relative; font-weight: 500; }
+  header h1 { font-family: 'Zen Maru Gothic', sans-serif; font-size: 1.2rem; letter-spacing: 0.1em; position: relative; font-weight: 700; }
+  header p { font-size: 0.68rem; color: var(--subtext); margin-top: 5px; letter-spacing: 0.08em; position: relative; }
+
+  /* ---------- コントロール ---------- */
+  .controls { background: var(--panel); border-bottom: 1px solid var(--border); padding: 16px 16px 12px; }
+  .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+  .control-item label { display: block; font-size: 0.68rem; color: var(--subtext); letter-spacing: 0.06em; margin-bottom: 5px; font-weight: 500; }
+  .control-item input[type="text"],
+  .control-item select {
+    width: 100%; border: 1.5px solid var(--border); border-radius: 20px;
+    background: var(--bg); color: var(--text); outline: none;
+    font-family: 'Noto Sans JP', sans-serif; transition: border-color 0.2s;
+  }
+  .control-item input[type="text"] { padding: 8px 14px; font-size: 0.95rem; }
+  .control-item input[type="text"].invalid { border-color: var(--warn); }
+  .control-item input[type="text"]:focus,
+  .control-item select:focus { border-color: var(--accent); }
+  .control-item select {
+    padding: 7px 14px; font-size: 0.88rem; appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a08090' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+  }
+  .field-msg { font-size: 0.66rem; color: var(--warn); margin-top: 4px; min-height: 1em; }
+
+  .color-row { display: flex; gap: 8px; align-items: center; }
+  .color-row input[type="color"] { width: 36px; height: 36px; border: 2px solid var(--border); border-radius: 50%; padding: 2px; cursor: pointer; background: none; }
+  .color-hex { font-size: 0.75rem; color: var(--subtext); }
+
+  .fabric-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+  .swatch {
+    width: 36px; height: 36px; border-radius: 50%; border: 2.5px solid transparent;
+    cursor: pointer; overflow: hidden; flex-shrink: 0; padding: 0; background: none;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .swatch:hover { transform: scale(1.1); }
+  .swatch[aria-pressed="true"] { border-color: var(--accent); }
+  .swatch svg { width: 100%; height: 100%; display: block; }
+
+  .thread-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .thread-swatch {
+    display: flex; align-items: center; gap: 5px;
+    border: 1.5px solid var(--border); border-radius: 16px;
+    padding: 5px 10px 5px 5px; background: var(--bg); cursor: pointer;
+    font-size: 0.68rem; color: var(--text); transition: border-color 0.15s, background 0.15s;
+  }
+  .thread-swatch[aria-pressed="true"] { border-color: var(--accent); background: #fff0f4; }
+  .thread-swatch .chip { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.12); flex-shrink: 0; }
+  .thread-custom { position: relative; padding: 3px 10px 3px 3px; }
+  .thread-custom input[type="color"] { width: 22px; height: 22px; border: none; border-radius: 50%; padding: 0; cursor: pointer; }
+
+  .name-size-row { grid-column: span 2; display: flex; gap: 10px; align-items: center; }
+  .name-size-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+  .size-label { font-size: 0.78rem; color: var(--subtext); white-space: nowrap; }
+
+  /* ---------- プレビュー ---------- */
+  .previews-title { font-family: 'Zen Maru Gothic', sans-serif; font-size: 0.75rem; color: var(--subtext); letter-spacing: 0.1em; text-align: center; padding: 16px 0 4px; }
+  .select-hint { font-size: 0.68rem; color: var(--accent2); text-align: center; padding: 0 0 4px; letter-spacing: 0.04em; }
+  .drag-hint { font-size: 0.62rem; color: var(--subtext); text-align: center; padding: 0 12px 10px; letter-spacing: 0.02em; }
+
+  .previews { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 12px 8px; }
+  .preview-card {
+    background: var(--panel); border-radius: 20px; overflow: hidden;
+    box-shadow: 0 2px 14px var(--shadow);
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; border: 2.5px solid transparent; padding: 0;
+    font-family: inherit; color: inherit;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+    position: relative;
+  }
+  .preview-card:active { transform: scale(0.98); }
+  .preview-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 4px 20px rgba(232,130,154,0.22); }
+  .check-badge {
+    display: none; position: absolute; top: 8px; right: 8px;
+    width: 22px; height: 22px; background: var(--accent); border-radius: 50%;
+    align-items: center; justify-content: center; pointer-events: none;
+  }
+  .preview-card[aria-pressed="true"] .check-badge { display: flex; }
+  .preview-label { font-size: 0.7rem; color: var(--subtext); letter-spacing: 0.06em; padding: 8px 0 4px; font-family: 'Zen Maru Gothic', sans-serif; pointer-events: none; }
+  .preview-stage { width: 100%; display: flex; justify-content: center; touch-action: none; }
+  .preview-stage svg { width: 100%; height: auto; display: block; }
+  .preview-stage svg text#name-text { cursor: grab; }
+  .preview-stage svg text#name-text:active { cursor: grabbing; }
+  .name-resize-handle { cursor: ns-resize; }
+
+  .reset-pos-area { text-align: center; padding: 0 12px 14px; }
+  .reset-pos-btn {
+    background: none; border: 1.5px solid var(--border); color: var(--subtext);
+    border-radius: 16px; padding: 6px 16px; font-size: 0.68rem; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .reset-pos-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- 注文 ---------- */
+  .order-trigger-area { padding: 4px 12px 16px; }
+  .order-trigger-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 30px;
+    background: linear-gradient(135deg, var(--accent), #f0a0b4); color: #fff;
+    font-family: 'Zen Maru Gothic', sans-serif; font-size: 1rem; letter-spacing: 0.08em;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 16px rgba(232,130,154,0.3);
+    transition: opacity 0.2s, transform 0.1s;
+    opacity: 0.35; pointer-events: none;
+  }
+  .order-trigger-btn.active { opacity: 1; pointer-events: auto; }
+  .order-trigger-btn:active { transform: scale(0.98); }
+  .order-trigger-note { text-align: center; font-size: 0.64rem; color: var(--warn); margin-top: 6px; min-height: 1em; }
+
+  .order-panel {
+    display: none; margin: 0 12px 28px;
+    background: linear-gradient(145deg, #5a3e4b, #7a4e5e); color: #fff;
+    border-radius: 20px; padding: 20px 18px 18px;
+    animation: slideUp 0.25s ease;
+  }
+  .order-panel.visible { display: block; }
+  @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  .order-panel-title { font-family: 'Zen Maru Gothic', sans-serif; font-size: 0.75rem; letter-spacing: 0.12em; color: rgba(255,255,255,0.55); margin-bottom: 12px; }
+
+  .order-thumbnail {
+    background: rgba(255,255,255,0.08); border-radius: 14px;
+    padding: 12px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .order-thumbnail-img { width: 80px; flex-shrink: 0; }
+  .order-thumbnail-img svg { width: 100%; height: auto; display: block; }
+  .order-thumbnail-name { flex: 1; min-width: 0; }
+  .tn-label { font-size: 0.62rem; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; margin-bottom: 4px; }
+  .tn-value { font-family: 'Zen Maru Gothic', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; word-break: break-all; }
+  .tn-sub { font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 4px; display: flex; align-items: center; gap: 5px; }
+  .tn-chip { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); }
+
+  .order-summary { margin-bottom: 14px; }
+  .order-summary-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem;
+  }
+  .order-summary-row:last-child { border-bottom: none; }
+  .order-summary-row .ok { color: rgba(255,255,255,0.45); }
+  .order-summary-row .ov { color: #fff; font-weight: bold; }
+
+  .order-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .order-btn {
+    flex: 1; min-width: 130px; padding: 10px 0; border-radius: 20px; border: none;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 0.8rem; letter-spacing: 0.04em;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--accent); color: #fff; transition: opacity 0.18s;
+  }
+  .order-btn.secondary { background: rgba(255,255,255,0.15); }
+  .order-btn:hover { opacity: 0.82; }
+  .order-btn.saving { opacity: 0.5; pointer-events: none; }
+
+  @media (min-width: 600px) {
+    .previews { padding: 0 16px 8px; gap: 20px; }
+    .control-grid { grid-template-columns: repeat(4, 1fr); }
+    .name-size-row { grid-column: span 4; }
+    .order-trigger-area { padding: 4px 16px 16px; }
+    .order-panel { margin: 0 16px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">nemukuta</div>
+  <h1>巾着袋デザインプレビュー</h1>
+  <p>お名前・布地・かたちを選んでデザインを確認できます</p>
+</header>
+
+<div class="controls">
+  <div class="control-grid">
+    <div class="control-item" style="grid-column: span 2;">
+      <label for="nameInput">お名前</label>
+      <input type="text" id="nameInput" maxlength="20" placeholder="名前を入力">
+      <div class="field-msg" id="nameMsg"></div>
+    </div>
+    <div class="control-item">
+      <label for="fontSelect">フォント</label>
+      <select id="fontSelect"></select>
+    </div>
+    <div class="control-item">
+      <label>文字サイズ</label>
+      <div class="name-size-row" style="grid-column: unset;">
+        <input type="range" id="fontSize" min="12" max="48">
+        <span class="size-label" id="fontSizeVal"></span>
+      </div>
+    </div>
+    <div class="control-item" style="grid-column: span 2;">
+      <label>文字の色（刺繍糸）</label>
+      <div class="thread-swatches" id="threadSwatches"></div>
+    </div>
+    <div class="control-item" style="grid-column: span 2;">
+      <label>布地</label>
+      <div class="fabric-swatches" id="fabricSwatches"></div>
+    </div>
+    <div class="control-item" id="solidColorControl">
+      <label for="fabricColor">布地の色（無地のみ）</label>
+      <div class="color-row">
+        <input type="color" id="fabricColor">
+        <span class="color-hex" id="fabricColorHex"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="previews-title">▼ デザインプレビュー</div>
+<div class="select-hint">気に入ったほうをタップして選んでください</div>
+<div class="previews" id="previews"></div>
+<div class="drag-hint">名前をドラッグして位置を調整・丸いハンドルでサイズ調整できます</div>
+<div class="reset-pos-area">
+  <button type="button" class="reset-pos-btn" id="resetPosBtn">文字位置をリセット</button>
+</div>
+
+<div class="order-trigger-area">
+  <button class="order-trigger-btn" id="orderTriggerBtn">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13 5H3L2 13h12L13 5z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 5V4a2 2 0 014 0v1" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
+    このデザインで注文
+  </button>
+  <div class="order-trigger-note" id="orderTriggerNote"></div>
+</div>
+
+<div class="order-panel" id="orderPanel">
+  <div class="order-panel-title">ORDER SHEET ／ 注文内容</div>
+  <div class="order-thumbnail">
+    <div class="order-thumbnail-img" id="orderThumbImg"></div>
+    <div class="order-thumbnail-name">
+      <div class="tn-label">お名前</div>
+      <div class="tn-value" id="tnName"></div>
+      <div class="tn-sub" id="tnFont"></div>
+      <div class="tn-sub"><span class="tn-chip" id="tnChip"></span><span id="tnColor"></span></div>
+    </div>
+  </div>
+  <div class="order-summary" id="orderSummary"></div>
+  <div class="order-btns">
+    <button class="order-btn" id="orderDlBtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 4 3-4M1 11h12" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      画像を保存
+    </button>
+    <button class="order-btn secondary" id="orderMailBtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="10" rx="1.5" stroke="white" stroke-width="1.4"/><path d="M1 3l6 5 6-5" stroke="white" stroke-width="1.4"/></svg>
+      メールで注文する
+    </button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   0. 設定（触ってよい定数）
+   ============================================================ */
+
+// 注文メールの送り先。実際の受付アドレスに書き換えてください。
+const ORDER_EMAIL = 'order@example.com';
+
+/* ============================================================
+   1. 定数・データ定義
+   ============================================================ */
+
+const VIEWBOX = { w: 240, h: 310 };   // SVGの座標系（svg/*.svg と揃えること）
+const SVG_DIR = 'svg';                // 外部SVG置き場
+const NAME_MAX = 20;
+
+// --- 布地 ---
+// defs(uid, color) : <pattern> 等の定義（不要なら空文字）
+// fill(uid, color) : 塗り値（色 or url(#uid)）
+// image を持つ布地は実写テクスチャ。fabrics/ 内のファイルを差し替えれば見た目を更新できる
+const FABRICS = [
+  {
+    id: 'solid', label: '無地', needsColor: true,
+    swatch: c => `<rect width="36" height="36" fill="${c}"/>`,
+    defs:  () => '',
+    fill:  (uid, c) => c,
+  },
+  {
+    id: 'check', label: 'チェック', needsColor: false,
+    swatch: () => `<rect width="36" height="36" fill="#e8d6c0"/>
+      <line x1="12" y1="0" x2="12" y2="36" stroke="#b08060" stroke-width="1.6"/>
+      <line x1="24" y1="0" x2="24" y2="36" stroke="#b08060" stroke-width="1.6"/>
+      <line x1="0" y1="12" x2="36" y2="12" stroke="#b08060" stroke-width="1.6"/>
+      <line x1="0" y1="24" x2="36" y2="24" stroke="#b08060" stroke-width="1.6"/>`,
+    defs: uid => `<pattern id="${uid}" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="20" height="20" fill="#e8d6c0"/>
+      <line x1="10" y1="0" x2="10" y2="20" stroke="#b08060" stroke-width="1.2" stroke-opacity="0.7"/>
+      <line x1="0" y1="10" x2="20" y2="10" stroke="#b08060" stroke-width="1.2" stroke-opacity="0.7"/>
+    </pattern>`,
+    fill: uid => `url(#${uid})`,
+  },
+  {
+    id: 'dot', label: 'ドット', needsColor: false,
+    swatch: () => `<rect width="36" height="36" fill="#f0e8f8"/>
+      <circle cx="9"  cy="9"  r="3" fill="#b07cc4"/>
+      <circle cx="27" cy="9"  r="3" fill="#b07cc4"/>
+      <circle cx="18" cy="18" r="3" fill="#b07cc4"/>
+      <circle cx="9"  cy="27" r="3" fill="#b07cc4"/>
+      <circle cx="27" cy="27" r="3" fill="#b07cc4"/>`,
+    defs: uid => `<pattern id="${uid}" width="22" height="22" patternUnits="userSpaceOnUse">
+      <rect width="22" height="22" fill="#f0e8f8"/>
+      <circle cx="11" cy="11" r="3.5" fill="#b07cc4" fill-opacity="0.7"/>
+    </pattern>`,
+    fill: uid => `url(#${uid})`,
+  },
+  {
+    id: 'linen', label: 'リネン（柄）', needsColor: false,
+    swatch: () => `<rect width="36" height="36" fill="#d4c4a8"/>
+      ${Array.from({length: 9}, (_, i) => `<line x1="0" y1="${i*4+2}" x2="36" y2="${i*4+2}" stroke="#b8a888" stroke-width="1"/>`).join('')}
+      ${Array.from({length: 9}, (_, i) => `<line x1="${i*4+2}" y1="0" x2="${i*4+2}" y2="36" stroke="#c0ae90" stroke-width="0.6" stroke-opacity="0.6"/>`).join('')}`,
+    defs: uid => `<pattern id="${uid}" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="4" fill="#d4c4a8"/>
+      <line x1="0" y1="1" x2="4" y2="1" stroke="#b8a888" stroke-width="0.7" stroke-opacity="0.8"/>
+      <line x1="0" y1="3" x2="4" y2="3" stroke="#c0ae90" stroke-width="0.4" stroke-opacity="0.5"/>
+      <line x1="1" y1="0" x2="1" y2="4" stroke="#c4b494" stroke-width="0.4" stroke-opacity="0.4"/>
+    </pattern>`,
+    fill: uid => `url(#${uid})`,
+  },
+  {
+    id: 'photo-linen', label: '写真：リネン', needsColor: false, image: 'fabrics/linen-photo.jpg',
+    swatch: () => `<image href="fabrics/linen-photo.jpg" width="36" height="36" preserveAspectRatio="xMidYMid slice"/>`,
+    defs: uid => `<pattern id="${uid}" width="${VIEWBOX.w}" height="${VIEWBOX.h}" patternUnits="userSpaceOnUse">
+      <image href="fabrics/linen-photo.jpg" width="${VIEWBOX.w}" height="${VIEWBOX.h}" preserveAspectRatio="xMidYMid slice"/>
+    </pattern>`,
+    fill: uid => `url(#${uid})`,
+  },
+  {
+    id: 'photo-cotton', label: '写真：コットン', needsColor: false, image: 'fabrics/cotton-photo.jpg',
+    swatch: () => `<image href="fabrics/cotton-photo.jpg" width="36" height="36" preserveAspectRatio="xMidYMid slice"/>`,
+    defs: uid => `<pattern id="${uid}" width="${VIEWBOX.w}" height="${VIEWBOX.h}" patternUnits="userSpaceOnUse">
+      <image href="fabrics/cotton-photo.jpg" width="${VIEWBOX.w}" height="${VIEWBOX.h}" preserveAspectRatio="xMidYMid slice"/>
+    </pattern>`,
+    fill: uid => `url(#${uid})`,
+  },
+];
+
+// --- フォント（<option> はここから自動生成） ---
+const FONTS = [
+  { value: "'Shippori Mincho', serif",    label: '明朝体' },
+  { value: "'Noto Sans JP', sans-serif",  label: 'ゴシック体' },
+  { value: "'Yomogi', cursive",           label: '手書き風' },
+  { value: "'Zen Antique', serif",        label: 'アンティーク' },
+];
+
+// --- 刺繍糸カラーパレット（実際に用意できる色に合わせて調整してください） ---
+const THREAD_COLORS = [
+  { hex: '#f5f0e6', label: 'アイボリー' },
+  { hex: '#2c2016', label: 'ブラック' },
+  { hex: '#c0392b', label: 'レッド' },
+  { hex: '#2c3e64', label: 'ネイビー' },
+  { hex: '#e8829a', label: 'ピンク' },
+  { hex: '#4a7c59', label: 'グリーン' },
+  { hex: '#c9a227', label: 'ゴールド' },
+  { hex: '#6b4423', label: 'ブラウン' },
+];
+
+// --- かたち（既定値。shapes.json があればそちらを優先） ---
+const DEFAULT_SHAPES = [
+  { id: 'closed', label: '絞った状態' },
+  { id: 'open',   label: '広げた状態' },
+];
+let SHAPES = DEFAULT_SHAPES;
+
+const DEFAULTS = {
+  name: 'Hanako',
+  font: FONTS[0].value,
+  textColor: THREAD_COLORS[1].hex,
+  fabricId: 'solid',
+  fabricColor: '#f7c5d0',
+  fontSize: 26,
+  shapeId: null,
+};
+
+/* ============================================================
+   2. 状態
+   ============================================================ */
+
+const state = {
+  ...DEFAULTS,
+  namePos: {}, // { [shapeId]: {dx, dy, scale} } ドラッグで調整した位置・サイズ
+};
+
+const find = {
+  fabric: () => FABRICS.find(f => f.id === state.fabricId) || FABRICS[0],
+  font:   () => FONTS.find(f => f.value === state.font)    || FONTS[0],
+  shape:  () => SHAPES.find(s => s.id === state.shapeId)   || null,
+};
+
+function getNamePos(shapeId) {
+  if (!state.namePos[shapeId]) state.namePos[shapeId] = { dx: 0, dy: 0, scale: 1 };
+  return state.namePos[shapeId];
+}
+
+const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+
+/* ============================================================
+   3. 入力バリデーション
+   ============================================================ */
+
+function validateName(raw) {
+  const name = (raw ?? '').trim();
+  if (!name) return { valid: false, empty: true, message: '' };
+  if ([...name].length > NAME_MAX) {
+    return { valid: false, empty: false, message: `お名前は${NAME_MAX}文字以内でお願いします` };
+  }
+  // 絵文字・記号（刺繍で再現できないもの）を禁止
+  const forbidden = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}<>\\\/"']/gu;
+  if (forbidden.test(name)) {
+    return { valid: false, empty: false, message: '絵文字や記号（< > \\ / " \'）は使用できません' };
+  }
+  return { valid: true, empty: false, message: '' };
+}
+
+/* ============================================================
+   4. 外部設定の読み込み（shapes.json）
+   ============================================================ */
+
+async function loadShapesConfig() {
+  try {
+    const res = await fetch('shapes.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length && data.every(s => s && s.id && s.label)) {
+        SHAPES = data;
+      }
+    }
+  } catch { /* 取得できなければ DEFAULT_SHAPES のまま */ }
+}
+
+// URLパラメータ ⇄ state（リロード・共有用。UIには出さない）
+function loadFromUrl() {
+  const p = new URLSearchParams(location.search);
+  const get = k => p.get(k);
+  if (get('name'))   state.name        = get('name');
+  if (get('font'))   state.font        = get('font');
+  if (get('color'))  state.textColor   = '#' + get('color').replace('#', '');
+  if (get('fabric') && FABRICS.some(f => f.id === get('fabric'))) state.fabricId = get('fabric');
+  if (get('fc'))     state.fabricColor = '#' + get('fc').replace('#', '');
+  if (get('size'))   state.fontSize    = clamp(parseInt(get('size'), 10) || DEFAULTS.fontSize, 12, 48);
+  if (get('shape') && SHAPES.some(s => s.id === get('shape'))) state.shapeId = get('shape');
+}
+
+function syncUrl() {
+  const p = new URLSearchParams();
+  p.set('name', state.name);
+  p.set('font', state.font);
+  p.set('color', state.textColor.replace('#', ''));
+  p.set('fabric', state.fabricId);
+  p.set('fc', state.fabricColor.replace('#', ''));
+  p.set('size', state.fontSize);
+  if (state.shapeId) p.set('shape', state.shapeId);
+  history.replaceState(null, '', location.pathname + '?' + p.toString());
+}
+
+/* ============================================================
+   5. SVG 取得・加工
+   ------------------------------------------------------------
+   外部SVG(svg/closed.svg, svg/open.svg)の約束ごと:
+     - id="name-text"  … 名前を差し込む <text>
+     - id="bag-fabric" … 布地を塗る図形（複数なら class="bag-fabric"）
+   見つからない場合はプロトタイプSVGにフォールバック
+   ============================================================ */
+
+const svgCache = new Map();
+
+async function loadShapeSVG(shapeId) {
+  if (svgCache.has(shapeId)) return svgCache.get(shapeId);
+  let doc = null;
+  try {
+    const res = await fetch(`${SVG_DIR}/${shapeId}.svg`);
+    if (res.ok) {
+      const parsed = new DOMParser().parseFromString(await res.text(), 'image/svg+xml');
+      if (!parsed.querySelector('parsererror')) doc = parsed.documentElement;
+    }
+  } catch { /* ネットワーク不通なども握りつぶしてフォールバック */ }
+  if (!doc) doc = buildFallbackSVG(shapeId);
+  svgCache.set(shapeId, doc);
+  return doc;
+}
+
+function applyFabric(svgEl) {
+  const fabric = find.fabric();
+  const uid = `fab-${fabric.id}`;
+
+  let defs = svgEl.querySelector('defs[data-fabric-defs]');
+  if (!defs) {
+    defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.setAttribute('data-fabric-defs', '');
+    svgEl.insertBefore(defs, svgEl.firstChild);
+  }
+  defs.innerHTML = fabric.defs(uid, state.fabricColor);
+
+  const fill = fabric.fill(uid, state.fabricColor);
+  svgEl.querySelectorAll('#bag-fabric, .bag-fabric').forEach(node => node.setAttribute('fill', fill));
+}
+
+function applyName(svgEl, shapeId) {
+  const textEl = svgEl.querySelector('#name-text');
+  if (!textEl) return;
+
+  // 元の位置をSVGごとに一度だけ記憶しておく
+  if (textEl.dataset.baseX === undefined) {
+    textEl.dataset.baseX = textEl.getAttribute('x') || String(VIEWBOX.w / 2);
+    textEl.dataset.baseY = textEl.getAttribute('y') || String(VIEWBOX.h / 2);
+  }
+  const baseX = parseFloat(textEl.dataset.baseX);
+  const baseY = parseFloat(textEl.dataset.baseY);
+  const pos = getNamePos(shapeId);
+  const shapeScale = shapeId === 'closed' ? 0.72 : 1;
+  const fontSize = Math.max(8, Math.round(state.fontSize * shapeScale * pos.scale));
+
+  textEl.setAttribute('x', baseX + pos.dx);
+  textEl.setAttribute('y', baseY + pos.dy);
+  textEl.setAttribute('font-family', state.font);
+  textEl.setAttribute('font-size', fontSize);
+  textEl.setAttribute('fill', state.textColor);
+  textEl.textContent = state.name;
+
+  positionHandle(svgEl, textEl, fontSize);
+}
+
+function positionHandle(svgEl, textEl, fontSize) {
+  const handle = svgEl._nameHandle;
+  if (!handle) return;
+  const x = parseFloat(textEl.getAttribute('x'));
+  const y = parseFloat(textEl.getAttribute('y'));
+  const textWidth = (textEl.textContent.length || 1) * fontSize * 0.5;
+  handle.setAttribute('cx', x + textWidth / 2 + 10);
+  handle.setAttribute('cy', y + fontSize * 0.5);
+}
+
+function applyDesign(svgEl, shapeId) {
+  applyFabric(svgEl);
+  applyName(svgEl, shapeId);
+}
+
+/** 外部SVGが無いときの簡易プレビュー（プロトタイプ用） */
+function buildFallbackSVG(shapeId) {
+  const body = shapeId === 'closed'
+    ? 'M 22 240 Q 22 278 120 280 Q 218 278 218 240 L 218 131 C 218 131,210 100,132 64 C 127 61,123 58,120 57 C 117 58,113 61,108 64 C 30 100,22 131,22 131 Z'
+    : 'M 22 74 Q 24 58 120 56 Q 216 58 218 74 L 218 242 Q 218 280 120 282 Q 22 280 22 242 Z';
+  const ropes = shapeId === 'closed'
+    ? ['M 107 58 L 84 18 Q 74 2 62 12 Q 54 22 68 30 L 104 57', 'M 133 58 L 156 18 Q 166 2 178 12 Q 186 22 172 30 L 136 57']
+    : ['M 38 70 L 24 28 Q 16 8 8 18 Q 2 30 16 38 L 32 68', 'M 202 70 L 216 28 Q 224 8 232 18 Q 238 30 224 38 L 208 68'];
+  const nameY = shapeId === 'closed' ? 210 : 185;
+
+  const markup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEWBOX.w} ${VIEWBOX.h}">
+    ${ropes.map(d => `<path d="${d}" fill="none" stroke="#8a6858" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+    <path id="bag-fabric" d="${body}" fill="#d4c4a8" stroke="#9a7070" stroke-width="1.8" stroke-opacity="0.45"/>
+    <text id="name-text" x="120" y="${nameY}" text-anchor="middle" dominant-baseline="middle"
+          font-family="sans-serif" font-size="26" fill="#5a3e4b"></text>
+  </svg>`;
+  return new DOMParser().parseFromString(markup, 'image/svg+xml').documentElement;
+}
+
+/* ============================================================
+   6. 名前のドラッグ移動・リサイズ
+   ============================================================ */
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function toSvgPoint(svg, clientX, clientY) {
+  const pt = svg.createSVGPoint();
+  pt.x = clientX; pt.y = clientY;
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return { x: 0, y: 0 };
+  const p = pt.matrixTransform(ctm.inverse());
+  return { x: p.x, y: p.y };
+}
+
+let dragState = null;
+
+function attachDragHandlers(svg, shapeId) {
+  const textEl = svg.querySelector('#name-text');
+  if (!textEl) return;
+
+  const handle = document.createElementNS(SVG_NS, 'circle');
+  handle.setAttribute('r', '7');
+  handle.setAttribute('fill', '#e8829a');
+  handle.setAttribute('stroke', '#ffffff');
+  handle.setAttribute('stroke-width', '2');
+  handle.setAttribute('class', 'name-resize-handle');
+  svg.appendChild(handle);
+  svg._nameHandle = handle;
+
+  const start = (mode, e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const pt = toSvgPoint(svg, e.clientX, e.clientY);
+    dragState = {
+      shapeId, mode, svg, textEl,
+      startX: pt.x, startY: pt.y,
+      startPos: { ...getNamePos(shapeId) },
+    };
+    window.addEventListener('pointermove', onDragMove);
+    window.addEventListener('pointerup', onDragEnd, { once: true });
+  };
+
+  textEl.addEventListener('pointerdown', e => start('move', e));
+  handle.addEventListener('pointerdown', e => start('scale', e));
+}
+
+function onDragMove(e) {
+  if (!dragState) return;
+  const { shapeId, mode, svg, textEl, startX, startY, startPos } = dragState;
+  const pt = toSvgPoint(svg, e.clientX, e.clientY);
+  const pos = getNamePos(shapeId);
+
+  if (mode === 'move') {
+    pos.dx = startPos.dx + (pt.x - startX);
+    pos.dy = startPos.dy + (pt.y - startY);
+  } else {
+    // 下方向へのドラッグで拡大、上方向で縮小
+    const delta = (pt.y - startY) / 60;
+    pos.scale = clamp(startPos.scale + delta, 0.5, 2);
+  }
+
+  const shapeScale = shapeId === 'closed' ? 0.72 : 1;
+  const fontSize = Math.max(8, Math.round(state.fontSize * shapeScale * pos.scale));
+  textEl.setAttribute('x', parseFloat(textEl.dataset.baseX) + pos.dx);
+  textEl.setAttribute('y', parseFloat(textEl.dataset.baseY) + pos.dy);
+  textEl.setAttribute('font-size', fontSize);
+  positionHandle(svg, textEl, fontSize);
+
+  if (state.shapeId !== shapeId) { state.shapeId = shapeId; syncSelectionOnly(); }
+}
+
+function onDragEnd() {
+  window.removeEventListener('pointermove', onDragMove);
+  dragState = null;
+  syncOrderPanel();
+  syncUrl();
+}
+
+function resetNamePositions() {
+  state.namePos = {};
+  syncPreviews();
+  syncOrderPanel();
+  syncUrl();
+}
+
+/* ============================================================
+   7. UI構築（1回だけ）
+   ============================================================ */
+
+const $ = id => document.getElementById(id);
+const el = {
+  nameInput: $('nameInput'), nameMsg: $('nameMsg'), fontSelect: $('fontSelect'),
+  threadSwatches: $('threadSwatches'),
+  fabricSwatches: $('fabricSwatches'), solidColorControl: $('solidColorControl'),
+  fabricColor: $('fabricColor'), fabricColorHex: $('fabricColorHex'),
+  fontSize: $('fontSize'), fontSizeVal: $('fontSizeVal'),
+  previews: $('previews'), resetPosBtn: $('resetPosBtn'),
+  orderTriggerBtn: $('orderTriggerBtn'), orderTriggerNote: $('orderTriggerNote'),
+  orderPanel: $('orderPanel'), orderThumbImg: $('orderThumbImg'),
+  tnName: $('tnName'), tnFont: $('tnFont'), tnChip: $('tnChip'), tnColor: $('tnColor'),
+  orderSummary: $('orderSummary'), orderDlBtn: $('orderDlBtn'), orderMailBtn: $('orderMailBtn'),
+};
+
+/** プレビューカードの参照 { shapeId: {card, svg} } */
+const slots = new Map();
+
+function buildFontOptions() {
+  el.fontSelect.innerHTML = FONTS
+    .map(f => `<option value="${f.value.replace(/"/g, '&quot;')}">${f.label}</option>`)
+    .join('');
+}
+
+function buildThreadSwatches() {
+  el.threadSwatches.innerHTML = THREAD_COLORS.map(t => `
+    <button type="button" class="thread-swatch" data-hex="${t.hex}" title="${t.label}" aria-pressed="false">
+      <span class="chip" style="background:${t.hex}"></span>${t.label}
+    </button>`).join('') + `
+    <label class="thread-swatch thread-custom" title="カスタムカラー">
+      <input type="color" id="customColorInput">その他
+    </label>`;
+
+  el.threadSwatches.querySelectorAll('.thread-swatch[data-hex]').forEach(btn => {
+    btn.addEventListener('click', () => { state.textColor = btn.dataset.hex; refresh(); });
+  });
+  $('customColorInput').addEventListener('input', e => { state.textColor = e.target.value; refresh(); });
+}
+
+function buildSwatches() {
+  el.fabricSwatches.innerHTML = FABRICS.map(f => `
+    <button type="button" class="swatch" data-fabric="${f.id}" title="${f.label}" aria-pressed="false">
+      <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">${f.swatch(state.fabricColor)}</svg>
+    </button>`).join('');
+
+  el.fabricSwatches.querySelectorAll('.swatch').forEach(btn => {
+    btn.addEventListener('click', () => { state.fabricId = btn.dataset.fabric; refresh(); });
+  });
+}
+
+function refreshSolidSwatch() {
+  const rect = el.fabricSwatches.querySelector('[data-fabric="solid"] rect');
+  if (rect) rect.setAttribute('fill', state.fabricColor);
+}
+
+async function buildPreviewCards() {
+  el.previews.innerHTML = '';
+  slots.clear();
+
+  const docs = await Promise.all(SHAPES.map(s => loadShapeSVG(s.id)));
+
+  SHAPES.forEach((shape, i) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'preview-card';
+    card.setAttribute('aria-pressed', 'false');
+    card.innerHTML = `
+      <span class="check-badge">
+        <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="preview-label">${shape.label}</span>
+      <span class="preview-stage"></span>`;
+
+    const svg = docs[i].cloneNode(true);
+    svg.removeAttribute('width');
+    svg.removeAttribute('height');
+    card.querySelector('.preview-stage').appendChild(svg);
+    card.addEventListener('click', () => { state.shapeId = shape.id; refresh(); });
+
+    slots.set(shape.id, { card, svg });
+    el.previews.appendChild(card);
+
+    // DOMに接続された後でないと getScreenCTM が使えないためここで付与
+    attachDragHandlers(svg, shape.id);
+  });
+}
+
+/* ============================================================
+   8. 更新（stateが変わるたびに呼ぶ）
+   ============================================================ */
+
+function refresh() {
+  syncFormControls();
+  syncPreviews();
+  syncOrderPanel();
+  syncUrl();
+}
+
+/** ドラッグ中にshapeIdだけ変わった場合の軽量同期（カード選択状態のみ） */
+function syncSelectionOnly() {
+  slots.forEach(({ card }, shapeId) => {
+    card.setAttribute('aria-pressed', String(shapeId === state.shapeId));
+  });
+  el.orderTriggerBtn.classList.toggle('active', Boolean(state.shapeId) && validateName(state.name).valid);
+}
+
+function syncFormControls() {
+  if (el.nameInput.value !== state.name) el.nameInput.value = state.name;
+  el.fontSelect.value = state.font;
+  el.fabricColor.value = state.fabricColor;
+  el.fabricColorHex.textContent = state.fabricColor.toUpperCase();
+  el.fontSize.value = state.fontSize;
+  el.fontSizeVal.textContent = state.fontSize;
+
+  const v = validateName(state.name);
+  el.nameInput.classList.toggle('invalid', !v.valid && !v.empty);
+  el.nameMsg.textContent = v.message;
+
+  el.solidColorControl.style.display = find.fabric().needsColor ? '' : 'none';
+  el.fabricSwatches.querySelectorAll('.swatch').forEach(btn => {
+    btn.setAttribute('aria-pressed', String(btn.dataset.fabric === state.fabricId));
+  });
+  el.threadSwatches.querySelectorAll('.thread-swatch[data-hex]').forEach(btn => {
+    btn.setAttribute('aria-pressed', String(btn.dataset.hex.toLowerCase() === state.textColor.toLowerCase()));
+  });
+  const customInput = $('customColorInput');
+  if (customInput) customInput.value = state.textColor;
+}
+
+function syncPreviews() {
+  slots.forEach(({ card, svg }, shapeId) => {
+    card.setAttribute('aria-pressed', String(shapeId === state.shapeId));
+    applyDesign(svg, shapeId);
+  });
+  const nameOk = validateName(state.name).valid;
+  el.orderTriggerBtn.classList.toggle('active', Boolean(state.shapeId) && nameOk);
+  el.orderTriggerNote.textContent = (!state.shapeId)
+    ? ''
+    : (!nameOk ? 'お名前を確認してください' : '');
+}
+
+function syncOrderPanel() {
+  if (!el.orderPanel.classList.contains('visible')) return;
+  const shape = find.shape();
+  if (!shape) return;
+
+  const src = slots.get(shape.id);
+  if (src) {
+    el.orderThumbImg.innerHTML = '';
+    el.orderThumbImg.appendChild(src.svg.cloneNode(true));
+  }
+
+  el.tnName.textContent = state.name || '（未入力）';
+  el.tnFont.textContent = `${find.font().label} / ${state.fontSize}pt`;
+  el.tnChip.style.background = state.textColor;
+  el.tnColor.textContent = state.textColor.toUpperCase();
+
+  const rows = [
+    ['布地',       find.fabric().label],
+    ['フォント',   find.font().label],
+    ['文字サイズ', `${state.fontSize}pt`],
+    ['文字色',     state.textColor.toUpperCase()],
+    ['お名前',     state.name || '-'],
+  ];
+  el.orderSummary.innerHTML = rows.map(() => `<div class="order-summary-row"><span class="ok"></span><span class="ov"></span></div>`).join('');
+  el.orderSummary.querySelectorAll('.order-summary-row').forEach((row, i) => {
+    row.querySelector('.ok').textContent = rows[i][0];
+    row.querySelector('.ov').textContent = rows[i][1];
+  });
+}
+
+/* ============================================================
+   9. 画像保存
+   ------------------------------------------------------------
+   文字はSVGごとラスタライズせず、Canvasで描き直す。
+   （SVGをImageにするとWebフォントが読まれず別書体になるため）
+   ============================================================ */
+
+const EXPORT = { bagW: 300, bagH: 388, pad: 28, infoH: 100, titleH: 26 };
+
+/** SVG内の<image>の相対hrefを絶対URLにする（blob化すると相対パスが解決できないため） */
+function absolutizeImages(svgEl) {
+  svgEl.querySelectorAll('image').forEach(img => {
+    const href = img.getAttribute('href') || img.getAttribute('xlink:href');
+    if (href && !/^(https?:)?\/\//.test(href) && !href.startsWith('data:')) {
+      img.setAttribute('href', new URL(href, document.baseURI).href);
+    }
+  });
+}
+
+function drawSVG(ctx, svgEl, x, y, w, h) {
+  return new Promise(resolve => {
+    absolutizeImages(svgEl);
+    const src = new XMLSerializer().serializeToString(svgEl);
+    const url = URL.createObjectURL(new Blob([src], { type: 'image/svg+xml;charset=utf-8' }));
+    const img = new Image();
+    img.onload = () => { ctx.drawImage(img, x, y, w, h); URL.revokeObjectURL(url); resolve(); };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+    img.src = url;
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x,     y + h, r);
+  ctx.arcTo(x,     y + h, x,     y,     r);
+  ctx.arcTo(x,     y,     x + w, y,     r);
+  ctx.closePath();
+}
+
+async function exportImage() {
+  const shape = find.shape();
+  const slot = shape && slots.get(shape.id);
+  if (!slot) return null;
+
+  const { bagW, bagH, pad, infoH, titleH } = EXPORT;
+  const W = bagW + pad * 2;
+  const H = titleH + bagH + 14 + infoH + pad;
+  const dpr = 2;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  ctx.fillStyle = '#fdf6f0';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#a08090';
+  ctx.font = "500 10px 'Noto Sans JP', sans-serif";
+  ctx.textAlign = 'center';
+  ctx.fillText('nemukuta ／ 巾着袋デザインプレビュー', W / 2, 17);
+
+  // 袋（名前テキストは除いて描画 → あとでCanvasで描く。ハンドルも除く）
+  const clone = slot.svg.cloneNode(true);
+  clone.querySelectorAll('.name-resize-handle').forEach(h => h.remove());
+  const nameEl = clone.querySelector('#name-text');
+  let nameGeom = null;
+  if (nameEl) {
+    nameGeom = {
+      x: parseFloat(nameEl.getAttribute('x')) || VIEWBOX.w / 2,
+      y: parseFloat(nameEl.getAttribute('y')) || VIEWBOX.h / 2,
+      size: parseFloat(nameEl.getAttribute('font-size')) || state.fontSize,
+    };
+    nameEl.remove();
+  }
+  await drawSVG(ctx, clone, pad, titleH, bagW, bagH);
+
+  if (nameGeom && state.name) {
+    const sx = bagW / VIEWBOX.w, sy = bagH / VIEWBOX.h;
+    ctx.fillStyle = state.textColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = `${nameGeom.size * sx}px ${state.font}`;
+    ctx.fillText(state.name, pad + nameGeom.x * sx, titleH + nameGeom.y * sy);
+  }
+
+  const panelY = titleH + bagH + 14;
+  ctx.fillStyle = '#5a3e4b';
+  roundRect(ctx, pad, panelY, W - pad * 2, infoH, 12);
+  ctx.fill();
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = "10px 'Noto Sans JP', sans-serif";
+  ctx.fillText('お名前', pad + 16, panelY + 22);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `700 17px ${state.font}`;
+  ctx.fillText(state.name || '（未入力）', pad + 16, panelY + 44);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = "10px 'Noto Sans JP', sans-serif";
+  ctx.fillText(
+    `${find.fabric().label}　${find.font().label}　${state.fontSize}pt　${state.textColor.toUpperCase()}`,
+    pad + 16, panelY + 68
+  );
+
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = "9px 'Noto Sans JP', sans-serif";
+  ctx.fillText(shape.label, pad + 16, panelY + 84);
+
+  const safe = (state.name || 'design').replace(/[^\w\u3040-\u30FF\u4E00-\u9FFF]/g, '_');
+  const filename = `nemukuta_${safe}_${shape.id}.png`;
+  return { canvas, filename };
+}
+
+async function downloadImage() {
+  const result = await exportImage();
+  if (!result) return;
+  const link = document.createElement('a');
+  link.download = result.filename;
+  link.href = result.canvas.toDataURL('image/png');
+  link.click();
+}
+
+/* ============================================================
+   10. メールで注文
+   ============================================================ */
+
+function buildOrderMailto() {
+  const shape = find.shape();
+  const subject = `【nemukuta】巾着袋ご注文（${state.name || 'お名前未入力'}様）`;
+  const lines = [
+    `お名前：${state.name || '-'}`,
+    `かたち：${shape ? shape.label : '-'}`,
+    `布地：${find.fabric().label}`,
+    `フォント：${find.font().label}`,
+    `文字サイズ：${state.fontSize}pt`,
+    `文字色：${state.textColor.toUpperCase()}`,
+    '',
+    '※ プレビュー画像は別途「画像を保存」してこのメールに添付してください。',
+  ];
+  const body = lines.join('\n');
+  return `mailto:${ORDER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/* ============================================================
+   11. イベント
+   ============================================================ */
+
+el.nameInput.addEventListener('input', e => { state.name = e.target.value; refresh(); });
+el.fontSelect.addEventListener('change', e => { state.font = e.target.value; refresh(); });
+el.fontSize.addEventListener('input', e => { state.fontSize = parseInt(e.target.value, 10); refresh(); });
+el.fabricColor.addEventListener('input', e => {
+  state.fabricColor = e.target.value;
+  refreshSolidSwatch();
+  refresh();
+});
+
+el.resetPosBtn.addEventListener('click', resetNamePositions);
+
+el.orderTriggerBtn.addEventListener('click', () => {
+  if (!state.shapeId || !validateName(state.name).valid) return;
+  el.orderPanel.classList.add('visible');
+  syncOrderPanel();
+  setTimeout(() => el.orderPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+});
+
+el.orderDlBtn.addEventListener('click', async () => {
+  el.orderDlBtn.classList.add('saving');
+  try { await downloadImage(); }
+  finally { el.orderDlBtn.classList.remove('saving'); }
+});
+
+el.orderMailBtn.addEventListener('click', () => {
+  window.location.href = buildOrderMailto();
+});
+
+/* ============================================================
+   12. 初期化
+   ============================================================ */
+
+(async function init() {
+  await loadShapesConfig();
+  loadFromUrl();
+  buildFontOptions();
+  buildThreadSwatches();
+  buildSwatches();
+  await buildPreviewCards();
+
+  if (state.shapeId) el.orderPanel.classList.add('visible');
+
+  refresh();
+
+  if (document.fonts?.ready) document.fonts.ready.then(syncPreviews);
+})();
+</script>
+</body>
+</html>
